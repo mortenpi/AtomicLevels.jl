@@ -30,7 +30,7 @@ levels(conf::Config, term::Void) = [Level(conf,Term(0,0,1),0)]
 
 levels(conf::Config) = sort(vcat([levels(conf,term) for term in terms(conf)]...))
 
-import Base.print, Base.show, Base.string
+import Base.print, Base.show, Base.string, Base.writemime
 
 function print(io::IO, l::Level)
     print(io, "|", l.conf, " ", l.term)
@@ -42,6 +42,18 @@ function print(io::IO, l::Level)
     print(io, "〉")
 end
 show(io::IO, l::Level) = print(io, l)
+
+function writemime(io::IO, m::MIME"text/latex", l::Level, wrap = true)
+    wrap && print(io, "\$")
+    print(io, "|")
+    writemime(io, m, l.conf, false)
+    print(io, "{\\;}")
+    writemime(io, m, l.term, false)
+    J = den(l.J) == 1 ? "$(num(l.J))" : "$(num(l.J))/$(den(l.J))"
+    print(io, "_{$J}")
+    print(io, "\\rangle")
+    wrap && print(io, "\$")
+end
 
 string(l::Level) = "$(string(l.conf))_$(string(l.term))$(l.J)"
 

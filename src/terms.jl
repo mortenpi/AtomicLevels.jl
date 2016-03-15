@@ -69,7 +69,7 @@ function terms(config::Config)
     if length(config) == 0
         return [Term(0, 0, 1)]
     end
-    
+
     p = parity(config)
 
     ts = map(config) do orb
@@ -80,15 +80,30 @@ function terms(config::Config)
 end
 terms(config::AbstractString) = terms(ref_set_list(config))
 
-import Base.print, Base.show, Base.string
+import Base.print, Base.show, Base.writemime, Base.string
+
+function ELL(L::Integer)
+    if L<length(ells)
+        uppercase(ells[L+1])
+    else
+        string(L)
+    end
+end
 
 function print(io::IO, t::Term)
     print(io, superscript(multiplicity(t)))
-    print(io, uppercase(ells[t.L+1]))
+    print(io, ELL(t.L))
     t.parity == -1  && print(io, "⁻")
 end
 show(io::IO, t::Term) = print(io, t)
 
-string(t::Term) = "$(2t.S+1)$(uppercase(ells[t.L+1]))$(t.parity == -1 ? '-' : "")"
+function writemime(io::IO, ::MIME"text/latex", t::Term, wrap = true)
+    wrap && print(io, "\$")
+    p = t.parity == -1 ? "^{\\mathrm{o}}" : ""
+    print(io, "^{$(multiplicity(t))}\\mathrm{$(ELL(t.L))}$p")
+    wrap && print(io, "\$")
+end
+
+string(t::Term) = "$(2t.S+1)$(ELL(t.L))$(t.parity == -1 ? '-' : "")"
 
 export Term, multiplicity, weight, ==, <, isless, hash, couple_terms, terms, print, show, string
