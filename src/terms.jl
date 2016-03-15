@@ -46,21 +46,42 @@ function couple_terms(ts::Vector{Void})
     [nothing]
 end
 
+include("xu2006.jl")
+
+function xu_terms(ell::Integer, N::Integer, p::Integer)
+    candidates = map(((N//2 - floor(Int, N//2)):N//2)) do S
+        map(-S:S) do M_S
+            S_p = round(Int,2S)
+            M_Sp = round(Int, 2M_S)
+
+            a = (N-M_Sp) >> 1
+            b = (N+M_Sp) >> 1
+            fa = Xu.f(a-1,ell)
+            fb = Xu.f(b-1,ell)
+
+            map(0:(fa+fb)) do L
+                x = Xu.X(N,ell, S_p, L)
+                t = Term(L,S,p)
+                x != 0 ? t : nothing
+            end
+        end
+    end
+    candidates = vcat(vcat(candidates...)...)
+    ts = Vector{Term}(sort(unique(filter(c -> c != nothing, candidates))))
+    ts
+end
+
 function terms(orb::Orbital, p::Integer)
     ell = orb[2]
-    occ = orb[3]
+    N = orb[3]
     g = degeneracy(orb)
-    (occ > g/2) && (occ = g - occ)
+    (N > g/2) && (N = g - N)
 
-    if occ == 1
+    if N == 1
         return [Term(ell,1//2,p)]
-    elseif occ == 2
-        SL = filter!(sl -> sum(sl)%2 == 0,
-                     vcat([[(S,L) for S in [0, 1]] for L in 0:2ell]...))
-        return sort([Term(L, S, p) for (S,L) in SL])
     end
 
-    warn("No implementation for more than 2 equivalent electrons")
+    xu_terms(ell, N, p)
 end
 
 function terms(config::Config)
