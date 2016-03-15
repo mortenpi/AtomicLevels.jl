@@ -13,7 +13,8 @@ import Base.==
 
 # It makes no sense to sort levels with different electron configurations
 import Base.<
-<(l1::Level, l2::Level) = ((l1.conf == l2.conf)) && (l1.term < l2.term) || (l1.J < l2.J)
+<(l1::Level, l2::Level) = ((l1.conf == l2.conf)) && (l1.term < l2.term) ||
+    ((l1.conf == l2.conf)) && (l1.term == l2.term) && (l1.J < l2.J)
 import Base.isless
 isless(l1::Level, l2::Level) = (l1 < l2)
 
