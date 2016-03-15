@@ -27,8 +27,8 @@ function couple_terms(t1::Term, t2::Term)
     S1 = t1.S
     S2 = t2.S
     p = t1.parity * t2.parity
-    vcat([[Term(L, S, p) for S in abs(S1-S2):(S1+S2)]
-          for L in abs(L1-L2):(L1+L2)]...)
+    sort(vcat([[Term(L, S, p) for S in abs(S1-S2):(S1+S2)]
+               for L in abs(L1-L2):(L1+L2)]...))
 end
 
 function couple_terms(t1s::Vector{Term}, t2s::Vector{Term})
