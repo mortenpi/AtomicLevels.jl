@@ -116,7 +116,7 @@ end
 function print(io::IO, t::Term)
     print(io, superscript(multiplicity(t)))
     print(io, ELL(t.L))
-    t.parity == -1  && print(io, "⁻")
+    t.parity == -1  && print(io, "ᵒ")
 end
 show(io::IO, t::Term) = print(io, t)
 
