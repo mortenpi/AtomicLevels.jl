@@ -8,7 +8,7 @@ For a usage example, check out this [Jupyter notebook](examples/Simple levels.ip
 
 ## Ideas
 
-- [ ] Generate configurations with cores; [He], [Ne], &.
+- [x] Generate configurations with cores; [He], [Ne], &.
 - [ ] Coefficient of fractional parentage
 - [ ] Seniority number
 - [ ] jk-coupling, e.g., Ne I, first excited state: 1s²2s²2p⁵(²P⁰₃.₂)3s ²[³/₂]⁰₀,₁
