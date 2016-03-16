@@ -48,19 +48,20 @@ end
 
 include("xu2006.jl")
 
-function xu_terms(ell::Integer, N::Integer, p::Integer)
-    candidates = map(((N//2 - floor(Int, N//2)):N//2)) do S
+# This function calculates the term symbol for a given orbital ℓʷ
+function xu_terms(ell::Integer, w::Integer, p::Integer)
+    candidates = map(((w//2 - floor(Int, w//2)):w//2)) do S
         map(-S:S) do M_S
             S_p = round(Int,2S)
             M_Sp = round(Int, 2M_S)
 
-            a = (N-M_Sp) >> 1
-            b = (N+M_Sp) >> 1
+            a = (w-M_Sp) >> 1
+            b = (w+M_Sp) >> 1
             fa = Xu.f(a-1,ell)
             fb = Xu.f(b-1,ell)
 
             map(0:(fa+fb)) do L
-                x = Xu.X(N,ell, S_p, L)
+                x = Xu.X(w,ell, S_p, L)
                 t = Term(L,S,p)
                 x != 0 ? t : nothing
             end
@@ -71,17 +72,19 @@ function xu_terms(ell::Integer, N::Integer, p::Integer)
     ts
 end
 
-function terms(orb::Orbital, p::Integer)
+function terms(orb::Orbital)
     ell = orb[2]
-    N = orb[3]
+    w = orb[3]
     g = degeneracy(orb)
-    (N > g/2) && (N = g - N)
+    (w > g/2) && (w = g - w)
 
-    if N == 1
+    p = parity(orb)
+
+    if w == 1
         return [Term(ell,1//2,p)]
     end
 
-    xu_terms(ell, N, p)
+    xu_terms(ell, w, p)
 end
 
 function terms(config::Config)
@@ -92,10 +95,8 @@ function terms(config::Config)
         return [Term(0, 0, 1)]
     end
 
-    p = parity(config)
-
     ts = map(config) do orb
-        terms(orb, p)
+        terms(orb)
     end
 
     couple_terms(ts)

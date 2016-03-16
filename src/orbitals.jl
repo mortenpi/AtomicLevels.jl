@@ -4,7 +4,8 @@ typealias Config Vector{Orbital}
 degeneracy(o::Orbital) = 2(2o[2] + 1)
 
 import Base.parity
-parity(config::Config) = (-1)^mapreduce(o -> o[2], +, config)
+parity(orbital::Orbital) = (-1)^(orbital[3]*orbital[2])
+parity(config::Config) = mapreduce(o -> parity(o), *, config)
 
 function ref_set_list(ref_set::AbstractString)
     orbs = map(split(ref_set)) do orb
@@ -29,7 +30,7 @@ function print(io::IO, o::Orbital)
     if o[4] == "c"
         print(io, "ᶜ")
     elseif o[4] == "i"
-        print(io, "ⁱ")        
+        print(io, "ⁱ")
     end
 end
 show(io::IO, o::Orbital) = print(io, o)
