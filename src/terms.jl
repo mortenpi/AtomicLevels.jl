@@ -50,26 +50,13 @@ include("xu2006.jl")
 
 # This function calculates the term symbol for a given orbital ℓʷ
 function xu_terms(ell::Integer, w::Integer, p::Integer)
-    candidates = map(((w//2 - floor(Int, w//2)):w//2)) do S
-        map(-S:S) do M_S
-            S_p = round(Int,2S)
-            M_Sp = round(Int, 2M_S)
-
-            a = (w-M_Sp) >> 1
-            b = (w+M_Sp) >> 1
-            fa = Xu.f(a-1,ell)
-            fb = Xu.f(b-1,ell)
-
-            map(0:(fa+fb)) do L
-                x = Xu.X(w,ell, S_p, L)
-                t = Term(L,S,p)
-                x != 0 ? t : nothing
-            end
+    ts = map(((w//2 - floor(Int, w//2)):w//2)) do S
+        S_p = round(Int,2S)
+        map(0:w*ell) do L
+            repmat([Term(L,S,p)], Xu.X(w,ell, S_p, L))
         end
     end
-    candidates = vcat(vcat(candidates...)...)
-    ts = Vector{Term}(sort(unique(filter(c -> c != nothing, candidates))))
-    ts
+    vcat(vcat(ts...)...)
 end
 
 function terms(orb::Orbital)
