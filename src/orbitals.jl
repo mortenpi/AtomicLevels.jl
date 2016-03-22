@@ -86,4 +86,4 @@ end
 
 string(c::Config) = join([string(o) for o in c], "_")
 
-export Orbital, Config, degeneracy, parity, @c_str, print, show, string
+export Orbital, Config, degeneracy, parity, ref_set_list, @c_str, print, show, string

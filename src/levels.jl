@@ -21,14 +21,10 @@ isless(l1::Level, l2::Level) = (l1 < l2)
 import Base.hash
 hash(l::Level) = hash((hash(l.config),hash(l.term),l.J))
 
-function levels(conf::Config, term::Term)
-    L = term.L
-    S = term.S
-    sort([Level(conf,term,J) for J in abs(L-S):(L+S)])
-end
+J_range(term::Term) = abs(term.L-term.S):(term.L+term.S)
 
+levels(conf::Config, term::Term) = sort([Level(conf,term,J) for J in J_range(term)])
 levels(conf::Config, term::Void) = [Level(conf,Term(0,0,1),0)]
-
 levels(conf::Config) = sort(vcat([levels(conf,term) for term in terms(conf)]...))
 
 import Base.print, Base.show, Base.string, Base.writemime
@@ -58,4 +54,4 @@ end
 
 string(l::Level) = "$(string(l.conf))_$(string(l.term))$(l.J)"
 
-export Level, weight, ==, <, isless, hash, levels, print, show, string
+export Level, weight, ==, <, isless, hash, J_range, levels, print, show, string
