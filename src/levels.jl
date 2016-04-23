@@ -42,13 +42,11 @@ show(io::IO, l::Level) = print(io, l)
 
 function writemime(io::IO, m::MIME"text/latex", l::Level, wrap = true)
     wrap && print(io, "\$")
-    print(io, "|")
     writemime(io, m, l.conf, false)
     print(io, "{\\;}")
     writemime(io, m, l.term, false)
     J = den(l.J) == 1 ? "$(num(l.J))" : "$(num(l.J))/$(den(l.J))"
     print(io, "_{$J}")
-    print(io, "\\rangle")
     wrap && print(io, "\$")
 end
 
