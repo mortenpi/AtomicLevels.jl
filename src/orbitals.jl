@@ -1,6 +1,16 @@
 typealias Orbital{I<:Integer,S<:AbstractString} Tuple{I,I,I,S} # (n,ell,occ,*/c/i)
 typealias Config Vector{Orbital}
 
+import Base: open
+open(config::Config) =
+    filter(config) do o
+        o[4] != "c"
+    end
+closed(config::Config) =
+    filter(config) do o
+        o[4] == "c"
+    end
+
 degeneracy(ell::Integer) = 2ell + 1
 degeneracy(o::Orbital) = 2*degeneracy(o[2])
 
@@ -86,4 +96,4 @@ end
 
 string(c::Config) = join([string(o) for o in c], "_")
 
-export Orbital, Config, degeneracy, parity, ref_set_list, @c_str, print, show, string
+export Orbital, Config, open, closed, degeneracy, parity, ref_set_list, @c_str, print, show, string
