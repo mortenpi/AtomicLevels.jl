@@ -82,7 +82,7 @@ end
 
 function string(o::Orbital)
     m =  o[4] == "*" ? "" : o[4]
-    "$(o[1])$(ells[o[2]+1])$(o[3])$m"
+    "$(o[1])$(ells[o[2]+1])$(o[3] > 1 ? o[3] : "")$m"
 end
 
 function print(io::IO, c::Config)
