@@ -3,6 +3,7 @@ typealias Config Vector{Orbital}
 
 degeneracy(ell::Integer) = 2ell + 1
 degeneracy(o::Orbital) = 2*degeneracy(o[2])
+filled(o::Orbital) = (o[3] == degeneracy(o))
 
 import Base.parity
 parity(orbital::Orbital) = (-1)^(orbital[3]*orbital[2])
@@ -101,5 +102,5 @@ end
 
 string(c::Config) = join([string(o) for o in c], "_")
 
-export Orbital, Config, degeneracy, parity, open, closed, fill,
+export Orbital, Config, degeneracy, filled, parity, open, closed, fill,
 ref_set_list, @c_str, print, show, string
