@@ -42,8 +42,11 @@ function ref_set_list(ref_set::AbstractString)
     end
     orbs = map(split(ref_set)) do orb
         m = match(r"([0-9]+)([a-z])([0-9]*)([ci*]{0,1})", orb)
-        Orbital((parse(Int, m[1]),
-                 searchindex(ells, m[2]) - 1,
+        n = parse(Int, m[1])
+        ell_i = searchindex(ells, m[2]) - 1
+        ell_i >= n && error("Invalid orbital $(m[1])$(m[2])")
+        Orbital((n,
+                 ell_i,
                  m[3] != "" ? parse(Int, m[3]) : 1,
                  m[4] != "" ? m[4] : "*"))
     end
