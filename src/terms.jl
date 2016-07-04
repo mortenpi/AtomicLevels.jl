@@ -114,6 +114,6 @@ function writemime(io::IO, ::MIME"text/latex", t::Term, wrap = true)
     wrap && print(io, "\$")
 end
 
-string(t::Term, show_parity::Bool = true) = "$(round(Int, 2t.S+1))$(ELL(t.L))$(show_parity && t.parity == -1 ? 'o' : "e")"
+string(t::Term, show_parity::Bool = true) = "$(round(Int, 2t.S+1))$(ELL(t.L))$(show_parity ? (t.parity == -1 ? 'o' : 'e') : "")"
 
 export Term, multiplicity, weight, ==, <, isless, hash, couple_terms, terms, print, show, string
