@@ -21,6 +21,8 @@ closed(config::Config) =
 import Base: fill
 fill(c::Config) = [Orbital((o[1], o[2], degeneracy(o), o[4])) for o in c]
 
+nelc(c::Config) = sum([o[3] for o in c])
+
 import Base.isless
 isless(o1::Orbital, o2::Orbital) = o1[1] < o2[1] || (o1[1] == o2[1] && o1[2] < o2[2])
 
@@ -102,5 +104,5 @@ end
 
 string(c::Config) = join([string(o) for o in c], "_")
 
-export Orbital, Config, degeneracy, filled, parity, open, closed, fill,
+export Orbital, Config, degeneracy, filled, parity, open, closed, fill, nelc,
 ref_set_list, @c_str, print, show, string
