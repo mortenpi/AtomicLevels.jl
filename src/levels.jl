@@ -19,7 +19,7 @@ import Base.isless
 isless(l1::Level, l2::Level) = (l1 < l2)
 
 import Base.hash
-hash(l::Level) = hash((hash(l.config),hash(l.term),l.J))
+hash(l::Level) = hash((hash(l.conf),hash(l.term),l.J))
 
 J_range(term::Term) = abs(term.L-term.S):(term.L+term.S)
 
