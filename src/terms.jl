@@ -6,6 +6,19 @@ type Term
     parity::Integer
 end
 
+function term_string(s::AbstractString)
+    T_pat = r"([0-9]+)([A-Z])([oe ]{0,1})"
+    ismatch(T_pat, s) || error("Invalid term string, $s")
+    m = match(T_pat, s)
+    L = lowercase(m[2][1])
+    Term(findfirst(ells, L)-1, (parse(Int, m[1]) - 1)//2,
+         m[3] == "o" ? -1 : 1)
+end
+
+macro T_str(s::AbstractString)
+    term_string(s)
+end
+
 multiplicity(t::Term) = round(Int, 2t.S + 1)
 weight(t::Term) = (2t.L + 1) * multiplicity(t)
 
@@ -116,4 +129,4 @@ end
 
 string(t::Term, show_parity::Bool = true) = "$(round(Int, 2t.S+1))$(ELL(t.L))$(show_parity ? (t.parity == -1 ? 'o' : 'e') : "")"
 
-export Term, multiplicity, weight, ==, <, isless, hash, couple_terms, terms, print, show, string
+export Term, term_string, @T_str, multiplicity, weight, ==, <, isless, hash, couple_terms, terms, print, show, string
