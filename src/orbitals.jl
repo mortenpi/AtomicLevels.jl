@@ -1,3 +1,5 @@
+using UnicodeFun
+
 typealias Orbital{I<:Integer,S<:AbstractString} Tuple{I,I,I,S} # (n,ell,occ,*/c/i)
 typealias Config Vector{Orbital}
 
@@ -64,23 +66,24 @@ macro c_str(s)
     ref_set_list(s)
 end
 
-import Base.print, Base.show, Base.string
+import Base.show, Base.string
 
-function print(io::IO, o::Orbital)
-    print(io, o[1], ells[o[2]+1])
-    o[3]>1 && print(io,superscript(o[3]))
-    if o[4] == "c"
-        print(io, "ᶜ")
+function latex(o::Orbital)
+    s = if o[4] == "c"
+       "^c"
     elseif o[4] == "i"
-        print(io, "ⁱ")
+        "^i"
+    else
+        ""
     end
+    occ = o[3] > 1 ? "^{$(o[3])}" : ""
+    "$(o[1])$(ells[o[2]+1])$(occ)$(s)"
 end
-show(io::IO, o::Orbital) = print(io, o)
+show(io::IO, o::Orbital) = print(io, to_latex(latex(o)))
 
 function show(io::IO, ::MIME"text/latex", o::Orbital, wrap = true)
-    m =  o[4] == "*" ? "" : o[4]
     wrap && print(io, "\$")
-    print(io, "$(o[1])\\mathrm{$(ells[o[2]+1])}^{$(o[3])$m}")
+    print(io, "\\mathrm{$(latex(o))}")
     wrap && print(io, "\$")
 end
 
@@ -89,68 +92,59 @@ function string(o::Orbital)
     "$(o[1])$(ells[o[2]+1])$(o[3] > 1 ? o[3] : "")$m"
 end
 
-function strip_core(conf::Config, core::Config)
-    if all(map(o -> o ∈ conf, core))
-        sort(filter(o -> o ∉ core, conf))
-    else
-        conf
-    end
-end
+function strip_core(c::Config)
+    core_str = ""
+    c1 = sort(copy(c))
+    s = c1[1][4]
 
-function print(io::IO, c::Config)
-    c1 = copy(c)
-    o1 = sort(c)[1]
-    if o1[1] == 1 && o1[2] == 0 && o1[3] == 2 # Tentatively a core
-        s = o1[4]
-        for core in reverse(["He", "Ne", "Ar", "Kr", "Xe", "Rn"])
-            stripped = strip_core(c1, core_ref_set(core, s))
-            if length(stripped) < length(c1)
-                print(io, "[$(core)]")
-                if s == "c"
-                    print(io, "ᶜ")
-                elseif s == "i"
-                    print(io, "ⁱ")
-                end
-                print(io, " ")
-                c1 = stripped
-                break
-            end
+    for core in reverse(["He", "Ne", "Ar", "Kr", "Xe", "Rn"])
+        core_rs = core_ref_set(core, s)
+        stripped = all(map(o -> o ∈ c, core_rs)) ? sort(filter(o -> o ∉ core_rs, c)) : c
+        if length(stripped) < length(c1) && length(stripped) > 0
+            core_str = core
+            c1 = stripped
+            break
         end
     end
-    for o in c1
-        print(io, o)
-    end
+
+    core_str, contains("ci", s) ? s : "", c1
 end
-show(io::IO, c::Config) = print(io, c)
+
+function latex(c::Config)
+    core,cs,c = strip_core(c)
+    core_str = if core == ""
+        ""
+    elseif cs == ""
+        "[$(core)] "
+    else
+        @sprintf("[%s]^{%s} ", core, cs)
+    end
+
+    @sprintf("%s%s", core_str,
+             join(map(latex, c), " "))
+end
+show(io::IO, c::Config) = print(io, to_latex(latex(c)))
 
 function show(io::IO, m::MIME"text/latex", c::Config, wrap = true)
-    c1 = sort(c)
-    o1 = c[1]
-    if o1[1] == 1 && o1[2] == 0 && o1[3] == 2 # Tentatively a core
-        s = o1[4]
-        for core in reverse(["He", "Ne", "Ar", "Kr", "Xe", "Rn"])
-            stripped = strip_core(c1, core_ref_set(core, s))
-            if length(stripped) < length(c1)
-                print(io, "[$(core)]")
-                if s == "c"
-                    print(io, "\$^c\$")
-                elseif s == "i"
-                    print(io, "\$^i\$")
-                end
-                print(io, " ")
-                c1 = stripped
-                break
-            end
-        end
-    end
     wrap && print(io, "\$")
-    for o in c1
-        show(io, m, o, false)
-    end
+    print(io, "\\mathrm{$(latex(c))}")
     wrap && print(io, "\$")
 end
 
-string(c::Config) = join([string(o) for o in c], "_")
+function string(c::Config)
+    core,cs,c = strip_core(c)
+    core_str = if core == ""
+        ""
+    elseif cs == ""
+        "$(core)_"
+    else
+        @sprintf("%s_%s_",
+                 core == "" ? "" : "$(core)",
+                 cs == "" ? "" : cs)
+    end
+    @sprintf("%s%s", core_str,
+             join(map(string, c), "_"))
+end
 
 export Orbital, Config, degeneracy, filled, parity, open, closed, fill, nelc,
-ref_set_list, @c_str, print, show, string
+ref_set_list, @c_str, show, string
