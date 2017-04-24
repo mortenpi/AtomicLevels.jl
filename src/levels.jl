@@ -27,7 +27,7 @@ levels(conf::Config, term::Term) = sort([Level(conf,term,J) for J in J_range(ter
 levels(conf::Config, term::Void) = [Level(conf,Term(0,0,1),0)]
 levels(conf::Config) = sort(vcat([levels(conf,term) for term in terms(conf)]...))
 
-import Base.print, Base.show, Base.string, Base.writemime
+import Base.print, Base.show, Base.string
 
 function print(io::IO, l::Level)
     print(io, "|", l.conf, " ", l.term)
@@ -40,11 +40,11 @@ function print(io::IO, l::Level)
 end
 show(io::IO, l::Level) = print(io, l)
 
-function writemime(io::IO, m::MIME"text/latex", l::Level, wrap = true)
+function show(io::IO, m::MIME"text/latex", l::Level, wrap = true)
     wrap && print(io, "\$")
-    writemime(io, m, l.conf, false)
+    show(io, m, l.conf, false)
     print(io, "{\\;}")
-    writemime(io, m, l.term, false)
+    show(io, m, l.term, false)
     J = den(l.J) == 1 ? "$(num(l.J))" : "$(num(l.J))/$(den(l.J))"
     print(io, "_{$J}")
     wrap && print(io, "\$")

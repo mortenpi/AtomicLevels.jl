@@ -103,7 +103,7 @@ function terms(config::Config)
 end
 terms(config::AbstractString) = terms(ref_set_list(config))
 
-import Base.print, Base.show, Base.writemime, Base.string
+import Base.print, Base.show, Base.string
 
 function ELL(L::Integer)
     if L<length(ells)
@@ -120,7 +120,7 @@ function print(io::IO, t::Term)
 end
 show(io::IO, t::Term) = print(io, t)
 
-function writemime(io::IO, ::MIME"text/latex", t::Term, wrap = true)
+function show(io::IO, ::MIME"text/latex", t::Term, wrap = true)
     wrap && print(io, "\$")
     p = t.parity == -1 ? "^{\\mathrm{o}}" : ""
     print(io, "^{$(multiplicity(t))}\\mathrm{$(ELL(t.L))}$p")

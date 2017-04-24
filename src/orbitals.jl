@@ -62,7 +62,7 @@ macro c_str(s)
     ref_set_list(s)
 end
 
-import Base.print, Base.show, Base.writemime, Base.string
+import Base.print, Base.show, Base.string
 
 function print(io::IO, o::Orbital)
     print(io, o[1], ells[o[2]+1])
@@ -75,7 +75,7 @@ function print(io::IO, o::Orbital)
 end
 show(io::IO, o::Orbital) = print(io, o)
 
-function writemime(io::IO, ::MIME"text/latex", o::Orbital, wrap = true)
+function show(io::IO, ::MIME"text/latex", o::Orbital, wrap = true)
     m =  o[4] == "*" ? "" : o[4]
     wrap && print(io, "\$")
     print(io, "$(o[1])\\mathrm{$(ells[o[2]+1])}^{$(o[3])$m}")
@@ -94,10 +94,10 @@ function print(io::IO, c::Config)
 end
 show(io::IO, c::Config) = print(io, c)
 
-function writemime(io::IO, m::MIME"text/latex", c::Config, wrap = true)
+function show(io::IO, m::MIME"text/latex", c::Config, wrap = true)
     wrap && print(io, "\$")
     for o in c
-        writemime(io, m, o, false)
+        show(io, m, o, false)
     end
     wrap && print(io, "\$")
 end

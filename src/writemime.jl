@@ -1,9 +1,10 @@
-function writemime{T<:Union{Term, Level}}(io::IO, m::MIME"text/latex", v::Vector{T})
+import Base: show
+function show{T<:Union{Term, Level}}(io::IO, m::MIME"text/latex", v::Vector{T})
     print(io, "\$[")
     for e in v[1:end-1]
-        writemime(io, m, e, false)
+        show(io, m, e, false)
         print(io, "\\quad")
     end
-    writemime(io, m, v[end], false)
+    show(io, m, v[end], false)
     print(io, "]\$")
 end
