@@ -1,4 +1,4 @@
-using SuperSub
+using UnicodeFun
 
 type Level
     conf::Config
@@ -27,29 +27,29 @@ levels(conf::Config, term::Term) = sort([Level(conf,term,J) for J in J_range(ter
 levels(conf::Config, term::Void) = [Level(conf,Term(0,0,1),0)]
 levels(conf::Config) = sort(vcat([levels(conf,term) for term in terms(conf)]...))
 
-import Base.print, Base.show, Base.string
+import Base.show, Base.string
 
-function print(io::IO, l::Level)
-    print(io, "|", l.conf, " ", l.term)
-    if den(l.J) == 1
-        print(io, subscript(num(l.J)))
+function latex(l::Level, rat_subscripts=true)
+    J = if den(l.J) == 1
+        "_{$(num(l.J))}"
+    elseif rat_subscripts
+        "_{$(num(l.J))/$(den(l.J))}"
     else
-        print(io, subscript(l.J))
+        "_{$(num(l.J))($(den(l.J)))}"
     end
-    print(io, "〉")
+    "|$(latex(l.conf))\\;$(latex(l.term))$(J)\\rangle"
 end
-show(io::IO, l::Level) = print(io, l)
+show(io::IO, l::Level) = print(io, to_latex(latex(l, false)))
 
 function show(io::IO, m::MIME"text/latex", l::Level, wrap = true)
     wrap && print(io, "\$")
-    show(io, m, l.conf, false)
-    print(io, "{\\;}")
-    show(io, m, l.term, false)
-    J = den(l.J) == 1 ? "$(num(l.J))" : "$(num(l.J))/$(den(l.J))"
-    print(io, "_{$J}")
+    print(io, "\\mathrm{$(latex(l))}")
     wrap && print(io, "\$")
 end
 
-string(l::Level) = "$(string(l.conf))_$(string(l.term))$(l.J)"
+function string(l::Level)
+    J = den(l.J) == 1 ? num(l.J) : replace("$(float(l.J))", ".", "_")
+    "$(string(l.conf))_$(string(l.term))$(J)"
+end
 
-export Level, weight, ==, <, isless, hash, J_range, levels, print, show, string
+export Level, weight, ==, <, isless, hash, J_range, levels, show, string

@@ -1,4 +1,4 @@
-using SuperSub
+using UnicodeFun
 
 type Term
     L::Integer
@@ -103,7 +103,7 @@ function terms(config::Config)
 end
 terms(config::AbstractString) = terms(ref_set_list(config))
 
-import Base.print, Base.show, Base.string
+import Base.show, Base.string
 
 function ELL(L::Integer)
     if L<length(ells)
@@ -113,20 +113,18 @@ function ELL(L::Integer)
     end
 end
 
-function print(io::IO, t::Term)
-    print(io, superscript(multiplicity(t)))
-    print(io, ELL(t.L))
-    t.parity == -1  && print(io, "ᵒ")
+function latex(t::Term)
+    par = (t.parity == -1 ? "^o" : "")
+    "^{$(multiplicity(t))}$(ELL(t.L))$(par)"
 end
-show(io::IO, t::Term) = print(io, t)
+show(io::IO, t::Term) = print(io, to_latex(latex(t)))
 
-function show(io::IO, ::MIME"text/latex", t::Term, wrap = true)
+function show(io::IO, ::MIME"text/latex", t::Term, wrap::Bool = true)
     wrap && print(io, "\$")
-    p = t.parity == -1 ? "^{\\mathrm{o}}" : ""
-    print(io, "^{$(multiplicity(t))}\\mathrm{$(ELL(t.L))}$p")
+    print(io, "\\mathrm{$(latex(t))}")
     wrap && print(io, "\$")
 end
 
 string(t::Term, show_parity::Bool = true) = "$(round(Int, 2t.S+1))$(ELL(t.L))$(show_parity ? (t.parity == -1 ? 'o' : 'e') : "")"
 
-export Term, term_string, @T_str, multiplicity, weight, ==, <, isless, hash, couple_terms, terms, print, show, string
+export Term, term_string, @T_str, multiplicity, weight, ==, <, isless, hash, couple_terms, terms, show, string
