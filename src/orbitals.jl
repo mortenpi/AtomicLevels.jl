@@ -32,17 +32,19 @@ noble_gases = Dict("He" => "1s2",
                    "Kr" => "[Ar] 3d10 4s2 4p6",
                    "Xe" => "[Kr] 4d10 5s2 5p6",
                    "Rn" => "[Xe] 4f14 5d10 6s2 6p6")
+function core_ref_set(symbol::AbstractString, s::AbstractString="c")
+    if symbol ∉ keys(noble_gases)
+        error("Unknown core, $(symbol)")
+    end
+    s == "" && (s = "c")
+    sort(ref_set_list(join(map(o -> "$o$s", split(noble_gases[symbol])), " ")))
+end
 
 function ref_set_list(ref_set::AbstractString)
     m = match(r"\[([a-zA-Z]{2})\]([ci*]{0,1})(.*)", ref_set)
     core = []
     if m != nothing
-        if m[1] ∉ keys(noble_gases)
-            error("Unknown core, $m[1]")
-        end
-        s = m[2] != "" ? m[2] : "c"
-        core_ref_set = join(map(o -> "$o$s", split(noble_gases[m[1]])), " ")
-        core = sort(ref_set_list(core_ref_set))
+        core = core_ref_set(m[1], m[2])
         ref_set = strip(m[3])
     end
     orbs = map(split(ref_set)) do orb
@@ -87,16 +89,62 @@ function string(o::Orbital)
     "$(o[1])$(ells[o[2]+1])$(o[3] > 1 ? o[3] : "")$m"
 end
 
+function strip_core(conf::Config, core::Config)
+    if all(map(o -> o ∈ conf, core))
+        sort(filter(o -> o ∉ core, conf))
+    else
+        conf
+    end
+end
+
 function print(io::IO, c::Config)
-    for o in c
+    c1 = copy(c)
+    o1 = sort(c)[1]
+    if o1[1] == 1 && o1[2] == 0 && o1[3] == 2 # Tentatively a core
+        s = o1[4]
+        for core in reverse(["He", "Ne", "Ar", "Kr", "Xe", "Rn"])
+            stripped = strip_core(c1, core_ref_set(core, s))
+            if length(stripped) < length(c1)
+                print(io, "[$(core)]")
+                if s == "c"
+                    print(io, "ᶜ")
+                elseif s == "i"
+                    print(io, "ⁱ")
+                end
+                print(io, " ")
+                c1 = stripped
+                break
+            end
+        end
+    end
+    for o in c1
         print(io, o)
     end
 end
 show(io::IO, c::Config) = print(io, c)
 
 function show(io::IO, m::MIME"text/latex", c::Config, wrap = true)
+    c1 = sort(c)
+    o1 = c[1]
+    if o1[1] == 1 && o1[2] == 0 && o1[3] == 2 # Tentatively a core
+        s = o1[4]
+        for core in reverse(["He", "Ne", "Ar", "Kr", "Xe", "Rn"])
+            stripped = strip_core(c1, core_ref_set(core, s))
+            if length(stripped) < length(c1)
+                print(io, "[$(core)]")
+                if s == "c"
+                    print(io, "\$^c\$")
+                elseif s == "i"
+                    print(io, "\$^i\$")
+                end
+                print(io, " ")
+                c1 = stripped
+                break
+            end
+        end
+    end
     wrap && print(io, "\$")
-    for o in c
+    for o in c1
         show(io, m, o, false)
     end
     wrap && print(io, "\$")
