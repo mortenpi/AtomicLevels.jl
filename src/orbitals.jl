@@ -1,13 +1,12 @@
 using UnicodeFun
 
-typealias Orbital{I<:Integer,S<:AbstractString} Tuple{I,I,I,S} # (n,ell,occ,*/c/i)
-typealias Config Vector{Orbital}
+Orbital{I<:Integer,S<:AbstractString} = Tuple{I,I,I,S} # (n,ell,occ,*/c/i)
+Config = Vector{Orbital}
 
 degeneracy(ell::Integer) = 2ell + 1
 degeneracy(o::Orbital) = 2*degeneracy(o[2])
 filled(o::Orbital) = (o[3] == degeneracy(o))
 
-import Base.parity
 parity(orbital::Orbital) = (-1)^(orbital[3]*orbital[2])
 parity(config::Config) = mapreduce(o -> parity(o), *, config)
 
