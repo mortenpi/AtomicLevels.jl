@@ -1,6 +1,6 @@
 using UnicodeFun
 
-type Term
+struct Term
     L::Integer
     S::Rational
     parity::Integer
@@ -55,7 +55,7 @@ end
 
 couple_terms(ts::Vector{Vector{Term}}) = reduce(couple_terms, ts)
 
-function couple_terms(ts::Vector{Void})
+function couple_terms(ts::Vector{Nothing})
     [nothing]
 end
 
@@ -66,7 +66,7 @@ function xu_terms(ell::Integer, w::Integer, p::Integer)
     ts = map(((w//2 - floor(Int, w//2)):w//2)) do S
         S_p = round(Int,2S)
         map(0:w*ell) do L
-            repmat([Term(L,S,p)], Xu.X(w,ell, S_p, L))
+            repeat([Term(L,S,p)], Xu.X(w,ell, S_p, L))
         end
     end
     vcat(vcat(ts...)...)

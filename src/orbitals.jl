@@ -1,4 +1,5 @@
 using UnicodeFun
+using Printf
 
 Orbital{I<:Integer,S<:AbstractString} = Tuple{I,I,I,S} # (n,ell,occ,*/c/i)
 Config = Vector{Orbital}
@@ -51,7 +52,7 @@ function ref_set_list(ref_set::AbstractString)
     orbs = map(split(ref_set)) do orb
         m = match(r"([0-9]+)([a-z])([0-9]*)([ci*]{0,1})", orb)
         n = parse(Int, m[1])
-        ell_i = searchindex(ells, m[2]) - 1
+        ell_i = something(findfirst(isequal(m[2][1]), ells), 0) - 1
         ell_i >= n && error("Invalid orbital $(m[1])$(m[2])")
         Orbital((n,
                  ell_i,
@@ -106,7 +107,7 @@ function strip_core(c::Config)
         end
     end
 
-    core_str, contains("ci", s) ? s : "", c1
+    core_str, occursin(s, "ci") ? s : "", c1
 end
 
 function latex(c::Config)

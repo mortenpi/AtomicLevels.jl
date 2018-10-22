@@ -1,9 +1,9 @@
 using AtomicLevels
-using Base.Test
+using Test
 
 import AtomicLevels: ells, ref_set_list
 
-function test_config{A<:Number,B<:Number}(c::Config, ts::Vector{Tuple{A,B}})
+function test_config(c::Config, ts::Vector{Tuple{A,B}}) where {A<:Number,B<:Number}
     cts = sort(terms(c))
     p = parity(c)
     ts = sort([Term(t...,p) for t in ts])
@@ -23,14 +23,14 @@ function test_config{A<:Number,B<:Number}(c::Config, ts::Vector{Tuple{A,B}})
     @test length(ts) == 0
 end
 
-function test_config{A<:Number,B<:Number}(cs::Tuple{Config,Config}, ts::Vector{Tuple{A,B}})
+function test_config(cs::Tuple{Config,Config}, ts::Vector{Tuple{A,B}}) where {A<:Number,B<:Number}
     map(cs) do c
         test_config(c, ts)
     end
 end
 
 function get_config(c::AbstractString)
-    n = searchindex(ells, c[1])
+    n = something(findfirst(isequal(c[1][1]), ells), 0)
     conf = ref_set_list("$n$c")
     ell = n - 1
     g = 2(2ell + 1)
@@ -41,24 +41,27 @@ function get_config(c::AbstractString)
     conf
 end
 
-function test_config{S<:AbstractString}(c::S, t::S)
+function test_config(c::S, t::S) where {S<:AbstractString}
     conf = get_config(c)
     m = match(r"([0-9]+)([A-Z])", t)
-    test_config(conf, [(searchindex(ells, lowercase(m[2]))-1, (parse(Int, m[1])-1)//2)])
+    test_config(conf, [(something(findfirst(isequal(lowercase(m[2])[1]), ells), 0)-1, (parse(Int, m[1])-1)//2)])
 end
 
-function test_config{S<:AbstractString}(c::S, ts::Vector{S})
+function test_config(c::ST, ts::Vector{ST}) where {ST<:AbstractString}
     conf = get_config(c)
 
     p1 = r"([0-9]+)\(((?:[A-Z][0-9]*)+)\)"
     p2 = r"([0-9]+)([A-Z])"
-    toL = s -> searchindex(ells, lowercase(s)) - 1
+    toL = s -> something(findfirst(isequal(lowercase(s)[1]), ells), 0) - 1
     ts = map(ts) do t
         m = match(p1, t)
         if m != nothing
             S = (parse(Int, m[1]) - 1)//2
-            m = matchall(r"([A-Z])([0-9]*)", m[2])
-            [[Tuple{Int,Rational{Int}}((toL(mm[1]),S)) for j in 1:(length(mm)>1 ? parse(Int, mm[2:end]) : 1)] for mm in m]
+            map(eachmatch(r"([A-Z])([0-9]*)", m[2])) do mmm
+                mm = mmm.match
+                [Tuple{Int,Rational{Int}}((toL(mm[1]),S))
+                 for j in 1:(length(mm)>1 ? parse(Int, mm[2:end]) : 1)]
+            end
         else
             m = match(p2, t)
             S = (parse(Int, m[1]) - 1)//2

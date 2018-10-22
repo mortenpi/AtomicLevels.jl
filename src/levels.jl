@@ -1,6 +1,6 @@
 using UnicodeFun
 
-type Level
+struct Level
     conf::Config
     term::Term
     J::Rational
@@ -24,7 +24,7 @@ hash(l::Level) = hash((hash(l.conf),hash(l.term),l.J))
 J_range(term::Term) = abs(term.L-term.S):(term.L+term.S)
 
 levels(conf::Config, term::Term) = sort([Level(conf,term,J) for J in J_range(term)])
-levels(conf::Config, term::Void) = [Level(conf,Term(0,0,1),0)]
+levels(conf::Config, term::Nothing) = [Level(conf,Term(0,0,1),0)]
 levels(conf::Config) = sort(vcat([levels(conf,term) for term in terms(conf)]...))
 
 import Base.show, Base.string
