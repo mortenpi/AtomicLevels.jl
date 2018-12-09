@@ -92,7 +92,7 @@ function Base.show(io::IO, config::Configuration)
     core_config = core(config)
     if length(core_config) > 0
         for (gas,cfg) in noble_gases
-            if length(core_config) == length(cfg) && core_config.orbitals == cfg.orbitals
+            if issimilar(core_config, cfg)
                 write(io, "[$(gas)]ᶜ")
                 length(config) > length(core_config) && write(io, " ")
             end
