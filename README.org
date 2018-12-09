@@ -8,6 +8,9 @@
 
 #+PROPERTY: header-args:julia :session *julia-README*
 
+NB This branch only works on Julia master due to some type inference
+bugs present in the latest release.
+
 * Usage
   #+BEGIN_SRC julia :exports none
     using Pkg
@@ -49,6 +52,72 @@
 
   #+RESULTS:
   : [Kr]ᶜ 5s² 5p⁻² 5p³
+
+** Excitations
+   We can easily generate all possible excitations from a reference
+   configuration. If no extra orbitals are specified, only those that
+   are "open" within the reference set will be considered:
+   #+BEGIN_SRC julia :exports both :results verbatim
+     excited_configurations(c"[Kr] 5s2 5p-2 5p3")
+   #+END_SRC
+
+   #+RESULTS:
+   : 2-element Array{Configuration{Int64,Rational{Int64}},1}:
+   :  5s² 5p⁻² 5p³
+   :  5s² 5p⁻ 5p⁴ 
+
+   By appending virtual orbitals, we can generate excitations to
+   configurations beyond those spanned by the reference set:
+   #+BEGIN_SRC julia :exports both :results verbatim
+     excited_configurations(c"[Kr] 5s2 5p-2 5p3",
+                            o"6s", o"6p-", o"6p", o"5d-", o"5d")
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+   41-element Array{Configuration{Int64,Rational{Int64}},1}:
+    5s² 5p⁻² 5p³       
+    5s 5p⁻² 5p³ 5d⁻    
+    5s 5p⁻² 5p³ 5d     
+    5s 5p⁻² 5p³ 6s     
+    5s² 5p⁻ 5p⁴        
+    5s² 5p⁻ 5p³ 6p⁻    
+    5s² 5p⁻ 5p³ 6p     
+    5s² 5p⁻² 5p² 6p⁻   
+    5s² 5p⁻² 5p² 6p    
+    5p⁻² 5p³ 5d⁻²      
+    5p⁻² 5p³ 5d⁻ 5d    
+    5p⁻² 5p³ 5d⁻ 6s    
+    5s 5p⁻ 5p⁴ 5d⁻     
+    5s 5p⁻ 5p³ 5d⁻ 6p⁻ 
+    5s 5p⁻ 5p³ 5d⁻ 6p  
+    5s 5p⁻² 5p² 5d⁻ 6p⁻
+    5s 5p⁻² 5p² 5d⁻ 6p 
+    5p⁻² 5p³ 5d²       
+    5p⁻² 5p³ 5d 6s     
+    5s 5p⁻ 5p⁴ 5d      
+    5s 5p⁻ 5p³ 5d 6p⁻  
+    5s 5p⁻ 5p³ 5d 6p   
+    5s 5p⁻² 5p² 5d 6p⁻ 
+    5s 5p⁻² 5p² 5d 6p  
+    5p⁻² 5p³ 6s²       
+    5s 5p⁻ 5p⁴ 6s      
+    5s 5p⁻ 5p³ 6s 6p⁻  
+    5s 5p⁻ 5p³ 6s 6p   
+    5s 5p⁻² 5p² 6s 6p⁻ 
+    5s 5p⁻² 5p² 6s 6p  
+    5s² 5p⁴ 6p⁻        
+    5s² 5p⁴ 6p         
+    5s² 5p³ 6p⁻²       
+    5s² 5p³ 6p⁻ 6p     
+    5s² 5p⁻ 5p² 6p⁻²   
+    5s² 5p⁻ 5p² 6p⁻ 6p 
+    5s² 5p³ 6p²        
+    5s² 5p⁻ 5p² 6p²    
+    5s² 5p⁻² 5p 6p⁻²   
+    5s² 5p⁻² 5p 6p⁻ 6p 
+    5s² 5p⁻² 5p 6p²    
+   #+end_example
 
 * Ideas
   - [x] Generate configurations with cores; [He], [Ne], &.
