@@ -1,4 +1,4 @@
-@testet "Configurations" begin
+@testset "Configurations" begin
     @testset "Construction" begin
         config = Configuration([o"1s", o"2s", o"2p", o"3s", o"3p"], [2,2,6,2,6], [:closed])
 
