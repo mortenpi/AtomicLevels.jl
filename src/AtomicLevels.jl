@@ -2,8 +2,6 @@ module AtomicLevels
 
 include("common.jl")
 include("orbitals.jl")
-include("terms.jl")
-include("levels.jl")
-include("show.jl")
+include("configurations.jl")
 
 end # module

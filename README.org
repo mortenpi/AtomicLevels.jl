@@ -6,11 +6,55 @@
 [[https://coveralls.io/github/jagot/AtomicLevels.jl?branch=master][https://coveralls.io/repos/github/jagot/AtomicLevels.jl/badge.svg?branch=master]]
 [[https://codecov.io/gh/jagot/AtomicLevels.jl][https://codecov.io/gh/jagot/AtomicLevels.jl/branch/master/graph/badge.svg]]
 
-For a usage example, check out this [[file:examples/Simple_levels.ipynb][Jupyter notebook]] (looks better on
-local notebook server).
+#+PROPERTY: header-args:julia :session *julia-README*
+
+* Usage
+  #+BEGIN_SRC julia :exports none
+    using Pkg
+    Pkg.activate(".")
+  #+END_SRC
+
+  #+BEGIN_SRC julia :exports cod
+    using AtomicLevels
+  #+END_SRC
+
+  #+RESULTS:
+  : nothing
+
+  The ground state configuration of xenon:
+  #+BEGIN_SRC julia :exports both
+    Xe = c"[Kr] 5s2 5p6"
+  #+END_SRC
+
+  #+RESULTS:
+  : [Kr]ᶜ 5s² 5p⁻² 5p⁴
+
+  As we see above, by default, the krypton core is declared
+  "closed". This is useful for calculations when the core should be
+  frozen. We can "open" it by affixing =*=:
+  #+BEGIN_SRC julia :exports both
+    Xe = c"[Kr]* 5s2 5p6"
+  #+END_SRC
+
+  #+RESULTS:
+  : 1s² 2s² 2p⁻² 2p⁴ 3s² 3p⁻² 3p⁴ 3d⁻⁴ 3d⁶ 4s² 4p⁻² 4p⁴ 5s² 5p⁻² 5p⁴
+
+  Note that the 5p shell was broken up into 2 5p- electrons and 4 5p
+  electrons. If we are not filling the shell, occupancy of the spin-up
+  and spin-down electrons has to be given separately:
+  
+  #+BEGIN_SRC julia :exports both
+    Xe⁺ = c"[Kr] 5s2 5p-2 5p3"
+  #+END_SRC
+
+  #+RESULTS:
+  : [Kr]ᶜ 5s² 5p⁻² 5p³
 
 * Ideas
   - [x] Generate configurations with cores; [He], [Ne], &.
   - [ ] Coefficient of fractional parentage
   - [ ] Seniority number
-  - [ ] jk-coupling, e.g., Ne I, first excited state: 1s²2s²2p⁵(²P⁰₃.₂)3s ²[³/₂]⁰₀,₁
+  - [ ] Different coupling schemes
+    - [ ] LS-coupling
+    - [ ] jk-coupling, e.g., Ne I, first excited state: 1s²2s²2p⁵(²P⁰₃.₂)3s ²[³/₂]⁰₀,₁
+    - [ ] JJ-coupling
