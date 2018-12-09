@@ -31,6 +31,8 @@
         @test active(c"[Kr]c 5s2") == c"5s2"
         @test inactive(c"[Kr]c 5s2i") == c"5s2i"
         @test inactive(c"[Kr]c 5s2") == c""
+
+        @test o"1s" ∈ c"[He]"
     end
 
     @testset "Parity" begin
@@ -73,5 +75,11 @@
              c"[Kr]c" =>"[Kr]ᶜ"]) do (c,s)
                  @test "$(c)" == s
              end
+    end
+
+    @testset "Orbital substitutions" begin
+        @test replace(c"1s2", o"1s"=>o"2p") == c"1s 2p"
+        @test_throws ArgumentError replace(c"1s2", o"2p"=>o"3p")
+        @test_throws ArgumentError replace(c"1s2 2s", o"2s"=>o"1s")
     end
 end

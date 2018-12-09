@@ -165,6 +165,9 @@ Base.iterate(conf::Configuration{I,R}, (el, i)=(length(conf)>0 ? conf[1] : nothi
 Base.length(conf::Configuration) = length(conf.orbitals)
 Base.eltype(conf::Configuration{I,R}) where {I,R} = (Orbital{I,R},I,Symbol)
 
+Base.in(orb::Orbital{I,R}, conf::Configuration{I,R}) where {I,R} =
+    orb ∈ conf.orbitals
+
 Base.filter(f::Function, conf::Configuration) =
     Configuration(conf[filter(j -> f(conf[j]...), eachindex(conf.orbitals))]...)
 
@@ -175,5 +178,35 @@ active(conf::Configuration) = filter((orb,occ,state) -> state != :inactive, peel
 
 parity(conf::Configuration) = (-1)^mapreduce(o -> o[1].ℓ*o[2], +, conf)
 Base.count(conf::Configuration) = mapreduce(o -> o[2], +, conf)
+
+function Base.replace(conf::Configuration{I,R}, orbs::Pair{Orbital{I,R},Orbital{I,R}}) where {I,R}
+    src,dest = orbs
+    orbitals = copy(conf.orbitals)
+    occupancy = copy(conf.occupancy)
+    states = copy(conf.states)
+
+    i = findfirst(isequal(src), orbitals)
+    isnothing(i) && throw(ArgumentError("$(src) not present in $(conf)"))
+
+    j = findfirst(isequal(dest), orbitals)
+    if isnothing(j)
+        push!(orbitals, dest)
+        push!(occupancy, 1)
+        push!(states, :open)
+    else
+        occupancy[j] == degeneracy(dest) &&
+            throw(ArgumentError("$(dest) already maximally occupied in $(conf)"))
+        occupancy[j] += 1
+    end
+
+    occupancy[i] -= 1
+    if occupancy[i] == 0
+        deleteat!(orbitals, i)
+        deleteat!(occupancy, i)
+        deleteat!(states, i)
+    end
+
+    Configuration(orbitals, occupancy, states)
+end
 
 export Configuration, @c_str, core, peel, active, inactive, parity
