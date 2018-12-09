@@ -20,6 +20,7 @@ config = Configuration([o"1s", o"2s", o"2p", o"3s", o"3p"], [2,2,6,2,6], [:close
 @test_throws ArgumentError AtomicLevels.configuration_from_string("1sc")
 @test_throws ArgumentError AtomicLevels.configuration_from_string("1s 1s")
 @test_throws ArgumentError AtomicLevels.configuration_from_string("[He]c 1s")
+@test_throws ArgumentError AtomicLevels.configuration_from_string("1s3")
 
 @test core(c"[Kr]c 5s2") == c"[Kr]c"
 @test peel(c"[Kr]c 5s2") == c"5s2"
@@ -40,6 +41,12 @@ config = Configuration([o"1s", o"2s", o"2p", o"3s", o"3p"], [2,2,6,2,6], [:close
 @test parity(c"[He]c 2s 2p2") == 1
 @test parity(c"[He]c 2s2 2p2") == 1
 @test parity(c"[He]c 2s2 2p2 3d") == 1
+
+# * Number of electrons
+@test count(c"1s") == 1
+@test count(c"[He]") == 2
+@test count(c"[Xe]") == 54
+@test count(peel(c"[Kr]c 5s2 5p6")) == 8
 
 # * Test pretty printing
 

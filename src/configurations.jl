@@ -21,7 +21,7 @@ struct Configuration{I<:Integer,R<:Rational{I}}
 
         for i in eachindex(orbitals)
             occ = occupancy[i]
-            occ < 1 && throw(ArgumentError("Invalid occuancy $(occ)"))
+            occ < 1 && throw(ArgumentError("Invalid occupancy $(occ)"))
             orb = orbitals[i]
             degen_orb = degeneracy(orb)
             if occ > degen_orb
