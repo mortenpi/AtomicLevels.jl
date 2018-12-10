@@ -58,28 +58,26 @@ Case 4, else:
 
 =#
 
-f(n::Integer,ell::Integer) = n >= 0 ? sum([ell-m for m in 0:n]) : 0
+f(n::I,ℓ::I) where {I<:Integer} = n >= 0 ? sum(ℓ-m for m in 0:n) : 0
 
-rev_range(a::Integer,b::Integer) = a<=b ? (a:b) : (b:a)
-
-function A(N::Integer, ell::Integer, ell_b::Integer, M_Sp::Integer, M_L::Integer)
-    if M_Sp == 1 && abs(M_L) <= ell && N == 1
+function A(N::I, ℓ::I, ℓ_b::I, M_S′::I, M_L::I) where {I<:Integer}
+    if M_S′ == 1 && abs(M_L) <= ℓ && N == 1
         1 # Case 1
-    elseif 1 < N && N <= 2ell + 1
+    elseif 1 < N && N <= 2ℓ + 1
         # Cases 2 and 3
         # N ± M_S' is always an even number
-        a = (N-M_Sp) >> 1
-        b = (N+M_Sp) >> 1
-        fa = f(a-1,ell)
-        fb = f(b-1,ell)
+        a = (N-M_S′) >> 1
+        b = (N+M_S′) >> 1
+        fa = f(a-1,ℓ)
+        fb = f(b-1,ℓ)
 
-        if M_Sp in 2-N:2:N-2 && abs(M_L) <= fa + fb
+        if M_S′ in 2-N:2:N-2 && abs(M_L) <= fa + fb
             mapreduce(+, max(-fa, M_L - fb):min(fa, M_L + fb)) do M_Lm
-                A(a,ell,ell,a,M_Lm)*A(b,ell,ell,b,M_L-M_Lm)
+                A(a,ℓ,ℓ,a,M_Lm)*A(b,ℓ,ℓ,b,M_L-M_Lm)
             end
-        elseif M_Sp == N && abs(M_L) <= f(N-1,ell)
-            mapreduce(+, floor(Int, (M_L-1)//N + (N+1)//2):min(ell_b,M_L + f(N-2,ell))) do M_LI
-                A(N - 1, ell, M_LI - 1, N - 1, M_L-M_LI)
+        elseif M_S′ == N && abs(M_L) <= f(N-1,ℓ)
+            mapreduce(+, floor(Int, (M_L-1)//N + (N+1)//2):min(ℓ_b,M_L + f(N-2,ℓ))) do M_LI
+                A(N - 1, ℓ, M_LI - 1, N - 1, M_L-M_LI)
             end
         else
             0 # Case 4
@@ -89,6 +87,6 @@ function A(N::Integer, ell::Integer, ell_b::Integer, M_Sp::Integer, M_L::Integer
     end
 end
 
-X(N::Integer, ell::Integer, Sp::Integer, L::Integer) = A(N,ell,ell,Sp,L) - A(N,ell,ell,Sp,L+1) + A(N,ell,ell,Sp+2,L+1) - A(N,ell,ell,Sp+2,L)
+X(N::I, ℓ::I, S′::I, L::I) where {I<:Integer} = A(N,ℓ,ℓ,S′,L) - A(N,ℓ,ℓ,S′,L+1) + A(N,ℓ,ℓ,S′+2,L+1) - A(N,ℓ,ℓ,S′+2,L)
 
 end

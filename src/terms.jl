@@ -1,18 +1,32 @@
 using UnicodeFun
 
-struct Term
-    L::Integer
-    S::Rational
-    parity::Integer
+struct Term{I<:Integer,R<:Rational{I},LT<:Union{I,R}}
+    L::LT
+    S::R
+    parity::I
 end
+Term(L::LT, S::I, parity::I) where {I<:Integer,LT<:Union{I,Rational{I}}} = Term{I,Rational{I},LT}(L,Rational{I}(S), parity)
 
 function term_string(s::AbstractString)
-    T_pat = r"([0-9]+)([A-Z])([oe ]{0,1})"
-    ismatch(T_pat, s) || error("Invalid term string, $s")
-    m = match(T_pat, s)
-    L = lowercase(m[2][1])
-    Term(findfirst(ells, L)-1, (parse(Int, m[1]) - 1)//2,
-         m[3] == "o" ? -1 : 1)
+    m = match(r"([0-9]+)([A-Z]|\[[0-9/]+\])([oe ]{0,1})", s)
+    isnothing(m) && throw(ArgumentError("Invalid term string $s"))
+    L = lowercase(m[2])
+    L = if L[1] == '['
+        L = strip(L, ['[',']'])
+        if occursin("/", L)
+            Ls = split(L, "/")
+            length(Ls) == 2 && length(Ls[1]) > 0 && length(Ls[2]) > 0 ||
+                throw(ArgumentError("Invalid term string $(s)"))
+            Rational(parse(Int, Ls[1]),parse(Int, Ls[2]))
+        else
+            parse(Int, L)
+        end
+    else
+        findfirst(L, spectroscopic)[1]-1
+    end
+    denominator(L) ∈ [1,2] || throw(ArgumentError("L must be integer or half-integer"))
+    S = (parse(Int, m[1]) - 1)//2
+    Term(L, S, m[3] == "o" ? -1 : 1)
 end
 
 macro T_str(s::AbstractString)
@@ -31,10 +45,13 @@ import Base.<
 import Base.isless
 isless(t1::Term, t2::Term) = (t1 < t2)
 
-import Base.hash
-hash(t::Term) = hash((t.L,t.S,t.parity))
+Base.hash(t::Term) = hash((t.L,t.S,t.parity))
 
 function couple_terms(t1::Term, t2::Term)
+    # It is assumed that t1 and t2 originate from non-equivalent
+    # electrons, since the vector model does not predict correct term
+    # couplings for equivalent electrons; some of the generated terms
+    # would violate the Pauli principle; cf. Cowan p. 108–109.
     L1 = t1.L
     L2 = t2.L
     S1 = t1.S
@@ -44,7 +61,7 @@ function couple_terms(t1::Term, t2::Term)
                for L in abs(L1-L2):(L1+L2)]...))
 end
 
-function couple_terms(t1s::Vector{Term}, t2s::Vector{Term})
+function couple_terms(t1s::Vector{<:Term}, t2s::Vector{<:Term})
     ts = map(t1s) do t1
         map(t2s) do t2
             couple_terms(t1, t2)
@@ -53,78 +70,64 @@ function couple_terms(t1s::Vector{Term}, t2s::Vector{Term})
     sort(unique(vcat(vcat(ts...)...)))
 end
 
-couple_terms(ts::Vector{Vector{Term}}) = reduce(couple_terms, ts)
-
-function couple_terms(ts::Vector{Nothing})
-    [nothing]
-end
+couple_terms(ts::Vector{<:Vector{<:Term}}) = reduce(couple_terms, ts)
 
 include("xu2006.jl")
 
 # This function calculates the term symbol for a given orbital ℓʷ
-function xu_terms(ell::Integer, w::Integer, p::Integer)
+function xu_terms(ℓ::I, w::I, p::I) where {I<:Integer}
     ts = map(((w//2 - floor(Int, w//2)):w//2)) do S
-        S_p = round(Int,2S)
-        map(0:w*ell) do L
-            repeat([Term(L,S,p)], Xu.X(w,ell, S_p, L))
-        end
+        S′ = 2S |> I
+        map(L -> repeat([Term(L,S,p)], Xu.X(w,ℓ, S′, L)), 0:w*ℓ)
     end
     vcat(vcat(ts...)...)
 end
 
-function terms(orb::Orbital)
-    ell = orb[2]
-    w = orb[3]
-    g = degeneracy(orb)
-    (w > g/2) && (w = g - w)
+function terms(orb::Orbital{I,R}, occ::I) where {I,R}
+    ℓ = orb.ℓ
+    g = non_rel_degeneracy(orb)
+    occ > g && throw(ArgumentError("Invalid occupancy $occ for $orb with degeneracy $g"))
+    (occ > g/2 && occ != g) && (occ = g - occ)
 
-    p = parity(orb)
-
-    if w == 1
-        return [Term(ell,1//2,p)]
+    p = parity(orb)^occ
+    if occ == 1
+        [Term(ℓ,1//2,p)] # Single electron
+    elseif ℓ == 0 && occ == 2 || occ == non_rel_degeneracy(orb)
+        [Term(0,0,1)] # Filled ℓ shell
+    else
+        xu_terms(ℓ, occ, p) # All other cases
     end
-
-    xu_terms(ell, w, p)
 end
 
-function terms(config::Config)
-    config = filter(o -> o[3]<degeneracy(o), config)
-
-    # All subshells are filled, total angular momentum = 0, total spin = 0
-    if length(config) == 0
-        return [Term(0, 0, 1)]
+function terms(config::Configuration{I,R}) where {I,R}
+    # We have to consider spin-up and spin-down electrons as
+    # equivalent for LS term coupling to work properly.
+    orbitals = Dict{Orbital{I,R},I}()
+    for (orb,occ,state) in config
+        orb_conj = flip_j(orb)
+        if orb_conj ∈ keys(orbitals)
+            orbitals[orb_conj] += occ
+        else
+            orbitals[orb] = occ
+        end
     end
-
-    ts = map(config) do orb
-        terms(orb)
+    ts = map(collect(keys(orbitals))) do orb
+        terms(orb,orbitals[orb])
     end
 
     couple_terms(ts)
 end
-terms(config::AbstractString) = terms(ref_set_list(config))
 
-import Base.show, Base.string
-
-function ELL(L::Integer)
-    if L<length(ells)
-        uppercase(ells[L+1])
-    else
-        string(L)
-    end
+function Base.show(io::IO, term::Term{I,R,I}) where {I<:Integer,R<:Rational{I}}
+    write(io, to_superscript(multiplicity(term)))
+    write(io, uppercase(spectroscopic_label(term.L)))
+    term.parity == -1 && write(io, "ᵒ")
 end
 
-function latex(t::Term)
-    par = (t.parity == -1 ? "^o" : "")
-    "^{$(multiplicity(t))}$(ELL(t.L))$(par)"
-end
-show(io::IO, t::Term) = print(io, to_latex(latex(t)))
-
-function show(io::IO, ::MIME"text/latex", t::Term, wrap::Bool = true)
-    wrap && print(io, "\$")
-    print(io, "\\mathrm{$(latex(t))}")
-    wrap && print(io, "\$")
+function Base.show(io::IO, term::Term{I,R,R}) where {I<:Integer,R<:Rational{I}}
+    write(io, to_superscript(multiplicity(term)))
+    write(io, "[$(numerator(term.L))/$(denominator(term.L))]")
+    term.parity == -1 && write(io, "ᵒ")
 end
 
-string(t::Term, show_parity::Bool = true) = "$(round(Int, 2t.S+1))$(ELL(t.L))$(show_parity ? (t.parity == -1 ? 'o' : 'e') : "")"
-
-export Term, term_string, @T_str, multiplicity, weight, ==, <, isless, hash, couple_terms, terms, show, string
+export Term, @T_str, multiplicity, weight, couple_terms, terms

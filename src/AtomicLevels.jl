@@ -4,5 +4,6 @@ include("common.jl")
 include("orbitals.jl")
 include("configurations.jl")
 include("excited_configurations.jl")
+include("terms.jl")
 
 end # module
