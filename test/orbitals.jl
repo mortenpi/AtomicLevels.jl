@@ -15,6 +15,28 @@ using Random
             [o"1s", o"2s", o"2p-", o"2p", o"3s", o"3p-", o"3p"]
     end
 
+    @testset "Flip j" begin
+        @test AtomicLevels.flip_j(o"1s") == o"1s"
+        @test AtomicLevels.flip_j(o"2p-") == o"2p"
+        @test AtomicLevels.flip_j(o"2p") == o"2p-"
+        @test AtomicLevels.flip_j(o"3d-") == o"3d"
+        @test AtomicLevels.flip_j(o"3d") == o"3d-"
+    end
+
+    @testset "Degeneracy" begin
+        @test degeneracy(o"1s") == 2
+        @test degeneracy(o"2p-") == 2
+        @test degeneracy(o"2p") == 4
+        @test degeneracy(o"3d-") == 4
+        @test degeneracy(o"3d") == 6
+
+        @test non_rel_degeneracy(o"1s") == 2
+        @test non_rel_degeneracy(o"2p-") == 6
+        @test non_rel_degeneracy(o"2p") == 6
+        @test non_rel_degeneracy(o"3d-") == 10
+        @test non_rel_degeneracy(o"3d") == 10
+    end
+
     @testset "Parity" begin
         @test parity(o"1s") == 1
         @test parity(o"2p") == -1

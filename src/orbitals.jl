@@ -18,10 +18,12 @@ function Base.show(io::IO, orb::Orbital{I,R}) where {I,R}
     orb.j < orb.ℓ && write(io, "⁻")
 end
 
-degeneracy(orb::Orbital{I,R}) where {I,R} = 2orb.j + 1 |> I
-parity(orb::Orbital{I,R}) where {I,R} = (-one(I))^orb.ℓ
-
 flip_j(orb::Orbital) = Orbital(orb.n, orb.ℓ, orb.ℓ > 0 ? orb.ℓ - (orb.j - orb.ℓ) : orb.j)
+
+degeneracy(orb::Orbital{I,R}) where {I,R} = 2orb.j + 1 |> I
+non_rel_degeneracy(orb::Orbital{I,R}) where {I,R} =
+    orb.ℓ == 0 ? 2 : degeneracy(orb)+degeneracy(flip_j(orb))
+parity(orb::Orbital{I,R}) where {I,R} = (-one(I))^orb.ℓ
 
 function Base.isless(a::Orbital, b::Orbital)
     a.n < b.n && return true
@@ -48,4 +50,4 @@ macro o_str(orb_str)
     orbital_from_string(orb_str)
 end
 
-export Orbital, @o_str, degeneracy, parity
+export Orbital, @o_str, degeneracy, non_rel_degeneracy, parity
