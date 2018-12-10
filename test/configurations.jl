@@ -82,4 +82,12 @@
         @test_throws ArgumentError replace(c"1s2", o"2p"=>o"3p")
         @test_throws ArgumentError replace(c"1s2 2s", o"2s"=>o"1s")
     end
+
+    @testset "Configuration additions" begin
+        @test c"1s" + c"1s" == c"[He]*"
+        @test c"1s" + c"2p" == c"1s 2p"
+        @test c"[Kr]*" + c"4d10" + c"5s2" + c"5p6" == c"[Xe]*"
+        @test_throws ArgumentError c"[He]*" + c"1s"
+        @test_throws ArgumentError c"1si" + c"1s"
+    end
 end

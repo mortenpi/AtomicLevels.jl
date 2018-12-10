@@ -209,4 +209,24 @@ function Base.replace(conf::Configuration{I,R}, orbs::Pair{Orbital{I,R},Orbital{
     Configuration(orbitals, occupancy, states)
 end
 
+import Base: +
+function +(a::Configuration{I,R}, b::Configuration{I,R}) where {I,R}
+    orbitals = copy(a.orbitals)
+    occupancy = copy(a.occupancy)
+    states = copy(a.states)
+
+    for (orb,occ,state) in b
+        i = findfirst(isequal(orb), orbitals)
+        if isnothing(i)
+            push!(orbitals, orb)
+            push!(occupancy, occ)
+            push!(states, state)
+        else
+            occupancy[i] += occ
+            states[i] == state || throw(ArgumentError("Incompatible states for $(orb): $(states[i]) and $state"))
+        end
+    end
+    Configuration(orbitals, occupancy, states)
+end
+
 export Configuration, @c_str, core, peel, active, inactive, parity
