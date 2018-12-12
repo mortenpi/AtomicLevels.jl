@@ -44,6 +44,14 @@ using Test
         @test T"1P" < T"3S"
     end
 
+    @testset "Pretty printing" begin
+        map([T"1S" => "¹S",
+             T"2So" => "²Sᵒ",
+             T"4[3/2]" => "⁴[3/2]"]) do (t,s)
+            @test "$(t)" == s
+        end
+    end
+
     @testset "Orbital terms" begin
         function test_single_orbital_terms(orb::Orbital{I,R}, occ::I, ts::Vector{Term{I,R,LT}}) where {I<:Integer,R<:Rational{I},LT}
             cts = sort(terms(orb, occ))

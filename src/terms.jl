@@ -70,7 +70,7 @@ function couple_terms(t1s::Vector{<:Term}, t2s::Vector{<:Term})
     sort(unique(vcat(vcat(ts...)...)))
 end
 
-couple_terms(ts::Vector{<:Vector{<:Term}}) = reduce(couple_terms, ts)
+couple_terms(ts::Vector{<:Vector{<:Term}}) = foldl(couple_terms, ts)
 
 include("xu2006.jl")
 
@@ -118,15 +118,15 @@ function terms(config::Configuration{I,R}) where {I,R}
     couple_terms(ts)
 end
 
-function Base.show(io::IO, term::Term{I,R,I}) where {I<:Integer,R<:Rational{I}}
-    write(io, to_superscript(multiplicity(term)))
+write_L(io::IO, term::Term{I,R,I}) where {I<:Integer,R<:Rational{I}} =
     write(io, uppercase(spectroscopic_label(term.L)))
-    term.parity == -1 && write(io, "ᵒ")
-end
 
-function Base.show(io::IO, term::Term{I,R,R}) where {I<:Integer,R<:Rational{I}}
-    write(io, to_superscript(multiplicity(term)))
+write_L(io::IO, term::Term{I,R,R}) where {I<:Integer,R<:Rational{I}} =
     write(io, "[$(numerator(term.L))/$(denominator(term.L))]")
+
+function Base.show(io::IO, term::Term)
+    write(io, to_superscript(multiplicity(term)))
+    write_L(io, term)
     term.parity == -1 && write(io, "ᵒ")
 end
 
