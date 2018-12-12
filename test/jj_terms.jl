@@ -15,7 +15,6 @@
                               5 => (1//2,3//2,5//2,5//2,7//2,7//2,9//2,9//2,9//2,11//2,11//2,13//2,13//2,15//2,15//2,17//2,17//2,19//2,21//2,25//2)]
         ]) do (orbs,wsj)
             foreach(orbs) do orb
-                println(orb)
                 foreach(wsj) do (ws,j)
                     j isa Number && (j = j:j)
                     foreach(ws) do w

@@ -64,10 +64,7 @@ using Test
                     ts = filter!(e -> e != t, ts)
                 end
             end
-            print(orb, to_superscript(occ), ", ")
-            if length(ts) == 0
-                println("success, terms: ", join(string.(cts), ", "))
-            else
+            if length(ts) != 0
                 println("fail, terms: ", join(string.(cts), ", "))
                 println("missing: ", join(string.(ts), ", "))
                 println("should not be there: ", join(string.(ccts), ", "))
@@ -170,7 +167,6 @@ using Test
             c1 = couple_terms(terms(o1), terms(o2))
             r = o1 + o2
             c2 = terms(r)
-            println(r, ": ", c1, " == ", c2)
             @test c1 == c2
         end
         
