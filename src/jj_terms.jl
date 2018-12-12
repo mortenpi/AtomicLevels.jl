@@ -21,7 +21,7 @@ function jj_terms(orb::Orbital{I,R}, w::I=one(I)) where {I,R}
     @unpack n,ℓ,j = orb
 
     2w ≥ 2j+1 && (w = 2j+1-w)
-    w == 0 && return [zero(I)]
+    w == 0 && return [zero(R)]
     w == 1 && return [j]
 
     # Forms full Cartisian product of all mⱼ, not necesserily the most
