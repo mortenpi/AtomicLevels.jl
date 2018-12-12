@@ -7,5 +7,6 @@ include("excited_configurations.jl")
 include("terms.jl")
 include("allchoices.jl")
 include("jj_terms.jl")
+include("csfs.jl")
 
 end # module
