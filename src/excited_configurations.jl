@@ -52,6 +52,7 @@ function excited_configurations(ref_set::Configuration{I,R},
     all(max_occupancy .<= [degeneracy(first(o)) for o in peel(ref_set)]) ||
         throw(ArgumentError("Invalid maximum occupancy requested"))
 
+    ref_set_core = core(ref_set)
     ref_set_peel = peel(ref_set)
 
     # The orbitals of the reference as valid orbitals to excite to as
@@ -66,7 +67,7 @@ function excited_configurations(ref_set::Configuration{I,R},
         excite_from = length(excitations)-excite_from
     end
 
-    excitations
+    [ref_set_core + e for e in excitations]
 end
 
 export excited_configurations
