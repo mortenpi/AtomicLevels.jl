@@ -1,5 +1,9 @@
 module AtomicLevels
 
+using UnicodeFun
+using Formatting
+using Parameters
+
 include("common.jl")
 include("orbitals.jl")
 include("configurations.jl")

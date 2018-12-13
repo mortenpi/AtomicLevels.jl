@@ -17,7 +17,7 @@ bugs present in the latest release.
     Pkg.activate(".")
   #+END_SRC
   
-  #+BEGIN_SRC julia :exports cod
+  #+BEGIN_SRC julia :exports code
     using AtomicLevels
   #+END_SRC
 
@@ -52,6 +52,17 @@ bugs present in the latest release.
 
   #+RESULTS:
   : [Kr]ᶜ 5s² 5p⁻² 5p³
+
+  It is also possible to work with "continuum orbitals", where the
+  main quantum number is replaced by a =Symbol=:
+  
+  #+BEGIN_SRC julia :exports both
+    Xe⁺e = c"[Kr] 5s2 5p-2 5p3 ks"
+  #+END_SRC
+
+  #+RESULTS:
+  : [Kr]ᶜ 5s² 5p⁻² 5p³ ks
+  
 
 ** Excitations
    We can easily generate all possible excitations from a reference
@@ -117,6 +128,96 @@ bugs present in the latest release.
     5s² 5p⁻² 5p 6p⁻²   
     5s² 5p⁻² 5p 6p⁻ 6p 
     5s² 5p⁻² 5p 6p²    
+   #+end_example
+
+   Again, using the "continuum orbitals", it is possible to generate
+   the state space accessible via one-photon transitions from the
+   ground state:
+   
+   #+BEGIN_SRC julia :exports both :results verbatim
+     Xe⁺e = excited_configurations(c"[Kr] 5s2 5p6",
+                                   o"ks", o"kp-", o"kp", o"kd-", o"kd",
+                                   max_excitations=:singles,
+                                   keep_parity=false)
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+   16-element Array{Configuration{Int64,Rational{Int64}},1}:
+    5s² 5p⁻² 5p⁴    
+    5s 5p⁻² 5p⁴ ks  
+    5s 5p⁻² 5p⁴ kp⁻ 
+    5s 5p⁻² 5p⁴ kp  
+    5s 5p⁻² 5p⁴ kd⁻ 
+    5s 5p⁻² 5p⁴ kd  
+    5s² 5p⁻ 5p⁴ ks  
+    5s² 5p⁻ 5p⁴ kp⁻ 
+    5s² 5p⁻ 5p⁴ kp  
+    5s² 5p⁻ 5p⁴ kd⁻ 
+    5s² 5p⁻ 5p⁴ kd  
+    5s² 5p⁻² 5p³ ks 
+    5s² 5p⁻² 5p³ kp⁻
+    5s² 5p⁻² 5p³ kp 
+    5s² 5p⁻² 5p³ kd⁻
+    5s² 5p⁻² 5p³ kd 
+   #+end_example
+
+   We can then query for the bound and continuum orbitals thus:
+   
+   #+BEGIN_SRC julia :exports both :results verbatim
+     map(Xe⁺e) do c
+         b = bound(c)
+         b, num_electrons(b)
+     end
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+   16-element Array{Tuple{Configuration{Int64,Rational{Int64}},Int64},1}:
+    (5s² 5p⁻² 5p⁴, 8)
+    (5s 5p⁻² 5p⁴, 7) 
+    (5s 5p⁻² 5p⁴, 7) 
+    (5s 5p⁻² 5p⁴, 7) 
+    (5s 5p⁻² 5p⁴, 7) 
+    (5s 5p⁻² 5p⁴, 7) 
+    (5s² 5p⁻ 5p⁴, 7) 
+    (5s² 5p⁻ 5p⁴, 7) 
+    (5s² 5p⁻ 5p⁴, 7) 
+    (5s² 5p⁻ 5p⁴, 7) 
+    (5s² 5p⁻ 5p⁴, 7) 
+    (5s² 5p⁻² 5p³, 7)
+    (5s² 5p⁻² 5p³, 7)
+    (5s² 5p⁻² 5p³, 7)
+    (5s² 5p⁻² 5p³, 7)
+    (5s² 5p⁻² 5p³, 7)
+   #+end_example
+   
+   #+BEGIN_SRC julia :exports both :results verbatim
+     map(Xe⁺e) do c
+         b = continuum(c)
+         b, num_electrons(b)
+     end
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+   16-element Array{Tuple{Configuration{Int64,Rational{Int64}},Int64},1}:
+    (, 0)   
+    (ks, 1) 
+    (kp⁻, 1)
+    (kp, 1) 
+    (kd⁻, 1)
+    (kd, 1) 
+    (ks, 1) 
+    (kp⁻, 1)
+    (kp, 1) 
+    (kd⁻, 1)
+    (kd, 1) 
+    (ks, 1) 
+    (kp⁻, 1)
+    (kp, 1) 
+    (kd⁻, 1)
+    (kd, 1) 
    #+end_example
 
 ** Term symbol calculation
@@ -240,7 +341,7 @@ bugs present in the latest release.
   - [x] Generate configurations with cores; [He], [Ne], &.
   - [ ] Coefficient of fractional parentage
   - [ ] Seniority number
-  - [ ] Different coupling schemes
-    - [ ] LS-coupling
+  - [-] Different coupling schemes
+    - [X] LS-coupling
     - [ ] jk-coupling, e.g., Ne I, first excited state: 1s²2s²2p⁵(²P⁰₃.₂)3s ²[³/₂]⁰₀,₁
-    - [ ] JJ-coupling
+    - [x] jj-coupling

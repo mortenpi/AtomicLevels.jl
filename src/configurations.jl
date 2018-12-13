@@ -1,11 +1,9 @@
-using UnicodeFun
-
 struct Configuration{I<:Integer,R<:Rational{I}}
-    orbitals::Vector{Orbital{I,R}}
+    orbitals::Vector{<:Orbital{I,R,<:MQ{I}}}
     occupancy::Vector{I}
     states::Vector{Symbol}
     function Configuration(
-        orbitals::Vector{Orbital{I,R}},
+        orbitals::Vector{<:Orbital{I,R,<:MQ{I}}},
         occupancy::Vector{I},
         states::Vector{Symbol}=[:open for o in orbitals]) where {I<:Integer,R<:Rational{I}}
         length(orbitals) == length(occupancy) || throw(ArgumentError("Need to specify occupation numbers for all orbitals"))
@@ -51,8 +49,8 @@ struct Configuration{I<:Integer,R<:Rational{I}}
     end
 end
 
-function Configuration(orbs::Vector{Tuple{Orbital{I,R},I,Symbol}}) where {I<:Integer,R<:Rational}
-    orbitals = Vector{Orbital{I,R}}()
+function Configuration(orbs::Vector{<:Tuple{<:Orbital{I,R,<:MQ{I}},I,Symbol}}) where {I<:Integer,R<:Rational}
+    orbitals = Vector{Orbital{I,R,<:MQ{I}}}()
     occupancy = Vector{I}()
     states = Vector{Symbol}()
     for (orb,occ,state) in orbs
@@ -63,11 +61,11 @@ function Configuration(orbs::Vector{Tuple{Orbital{I,R},I,Symbol}}) where {I<:Int
     Configuration(orbitals, occupancy, states)
 end
 
-Configuration(orbital::Orbital{I,R}, occupancy::I, state::Symbol=:open) where {I<:Integer,R<:Rational{I}} =
+Configuration(orbital::Orbital{I,R,<:MQ{I}}, occupancy::I, state::Symbol=:open) where {I<:Integer,R<:Rational{I}} =
     Configuration([orbital], [occupancy], [state])
 
 Configuration{I,R}() where {I,R} =
-    Configuration(Orbital{I,R}[], I[], Symbol[])
+    Configuration(Orbital{I,R,<:MQ{I}}[], I[], Symbol[])
 
 issimilar(a::Configuration{I,R}, b::Configuration{I,R}) where {I,R} =
     a.orbitals == b.orbitals && a.occupancy == b.occupancy
@@ -120,7 +118,7 @@ function core_configuration(element::AbstractString, state::AbstractString)
 end
 
 function parse_orbital(orb_str)
-    m = match(r"([0-9]+([a-z]|\[[0-9]+\])[-]{0,1})([0-9]*)([*ci]{0,1})",orb_str)
+    m = match(r"^([0-9]+|.([a-z]|\[[0-9]+\])[-]{0,1})([0-9]*)([*ci]{0,1})$",orb_str)
     orbital_from_string(m[1]),m[3]=="" ? 1 : parse(Int, m[3]),state_sym(m[4])
 end
 
@@ -165,6 +163,8 @@ Base.iterate(conf::Configuration{I,R}, (el, i)=(length(conf)>0 ? conf[1] : nothi
 Base.length(conf::Configuration) = length(conf.orbitals)
 Base.eltype(conf::Configuration{I,R}) where {I,R} = (Orbital{I,R},I,Symbol)
 
+num_electrons(conf::Configuration) = sum(conf.occupancy)
+
 Base.in(orb::Orbital{I,R}, conf::Configuration{I,R}) where {I,R} =
     orb ∈ conf.orbitals
 
@@ -175,11 +175,13 @@ core(conf::Configuration) = filter((orb,occ,state) -> state == :closed, conf)
 peel(conf::Configuration) = filter((orb,occ,state) -> state != :closed, conf)
 inactive(conf::Configuration) = filter((orb,occ,state) -> state == :inactive, conf)
 active(conf::Configuration) = filter((orb,occ,state) -> state != :inactive, peel(conf))
+bound(conf::Configuration) = filter((orb,occ,state) -> orb.n isa Integer, conf)
+continuum(conf::Configuration) = filter((orb,occ,state) -> orb.n isa Symbol, peel(conf))
 
 parity(conf::Configuration) = (-1)^mapreduce(o -> o[1].ℓ*o[2], +, conf)
 Base.count(conf::Configuration) = mapreduce(o -> o[2], +, conf)
 
-function Base.replace(conf::Configuration{I,R}, orbs::Pair{Orbital{I,R},Orbital{I,R}}) where {I,R}
+function Base.replace(conf::Configuration{I,R}, orbs::Pair{Orbital{I,R,N₁},Orbital{I,R,N₂}}) where {I,R,N₁,N₂}
     src,dest = orbs
     orbitals = copy(conf.orbitals)
     occupancy = copy(conf.occupancy)
@@ -229,4 +231,4 @@ function +(a::Configuration{I,R}, b::Configuration{I,R}) where {I,R}
     Configuration(orbitals, occupancy, states)
 end
 
-export Configuration, @c_str, core, peel, active, inactive, parity
+export Configuration, @c_str, num_electrons, core, peel, active, inactive, bound, continuum, parity

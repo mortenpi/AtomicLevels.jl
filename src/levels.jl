@@ -1,5 +1,3 @@
-using UnicodeFun
-
 struct Level
     conf::Config
     term::Term

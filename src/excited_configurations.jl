@@ -3,7 +3,8 @@ function single_excitations!(excitations::Vector{Configuration{I,R}},
                              orbitals::Vector{Orbital{I,R}},
                              min_occupancy::Vector{I},
                              max_occupancy::Vector{I},
-                             excite_from::I) where {I,R}
+                             excite_from::I,
+                             keep_parity::Bool=true) where {I,R}
     for config ∈ excitations[end-excite_from+1:end]
         for (orb,occ,state) ∈ config
             state != :open && continue
@@ -14,7 +15,7 @@ function single_excitations!(excitations::Vector{Configuration{I,R}},
             !isnothing(i) && occ == min_occupancy[i] && continue
             for subs_orb ∈ orbitals
                 subs_orb == orb && continue
-                parity(subs_orb) != parity(orb) && continue
+                keep_parity && parity(subs_orb) != parity(orb) && continue
                 # If the proposed substitution orbital is among those
                 # from the reference set and already present in the
                 # configuration to excite, we check if it is already
@@ -34,7 +35,8 @@ function excited_configurations(ref_set::Configuration{I,R},
                                 min_excitations::I=zero(I),
                                 max_excitations::Union{I,Symbol}=:doubles,
                                 min_occupancy::Vector{I}=zeros(I, length(peel(ref_set))),
-                                max_occupancy::Vector{I}=[degeneracy(first(o)) for o in peel(ref_set)]) where {I<:Integer, R<:Rational{I}}
+                                max_occupancy::Vector{I}=[degeneracy(first(o)) for o in peel(ref_set)],
+                                keep_parity::Bool=true) where {I<:Integer, R<:Rational{I}}
 
     if max_excitations isa Symbol
         max_excitations = if max_excitations == :singles
@@ -60,7 +62,7 @@ function excited_configurations(ref_set::Configuration{I,R},
     excite_from = 1
     for i in 1:max_excitations
         single_excitations!(excitations, ref_set_peel, orbitals,
-                            min_occupancy, max_occupancy, excite_from)
+                            min_occupancy, max_occupancy, excite_from, keep_parity)
         excite_from = length(excitations)-excite_from
     end
 

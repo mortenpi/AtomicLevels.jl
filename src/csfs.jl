@@ -1,5 +1,3 @@
-using Formatting
-
 struct CSF{I<:Integer, R<:Rational{I}, T<:Union{Term{I,R},R}}
     config::Configuration{I,R}
     subshell_terms::Vector{T}

@@ -1,5 +1,3 @@
-using Parameters
-
 couple_terms(J1::N, J2::N) where {I<:Integer,R<:Rational{I},N<:Union{I,R}} =
     collect(abs(J1-J2):(J1+J2))
 
@@ -17,8 +15,8 @@ function couple_terms(J::Vector{N}, j₀::N=zero(N)) where {I<:Integer,R<:Ration
     ts
 end
 
-function jj_terms(orb::Orbital{I,R}, w::I=one(I)) where {I,R}
-    @unpack n,ℓ,j = orb
+function jj_terms(orb::Orbital{I,R,N}, w::I=one(I)) where {I,R,N}
+    @unpack ℓ,j = orb
 
     2w ≥ 2j+1 && (w = 2j+1-w)
     w == 0 && return [zero(R)]
@@ -34,11 +32,11 @@ function jj_terms(orb::Orbital{I,R}, w::I=one(I)) where {I,R}
     while !isempty(MJs)
         # Identify the maximum MJ and associate it with J.
         MJmax = maximum(MJs)
-        n = count(isequal(MJmax), MJs)
-        append!(Js, repeat([MJmax], n))
-        # Remove the -MJ:MJ series, n times.
+        N = count(isequal(MJmax), MJs)
+        append!(Js, repeat([MJmax], N))
+        # Remove the -MJ:MJ series, N times.
         for MJ = -MJmax:MJmax
-            deleteat!(MJs, findall(isequal(MJ), MJs)[1:n])
+            deleteat!(MJs, findall(isequal(MJ), MJs)[1:N])
         end
     end
 

@@ -1,5 +1,3 @@
-using UnicodeFun
-
 struct Term{I<:Integer,R<:Rational{I},LT<:Union{I,R}}
     L::LT
     S::R
@@ -83,7 +81,7 @@ function xu_terms(ℓ::I, w::I, p::I) where {I<:Integer}
     vcat(vcat(ts...)...)
 end
 
-function terms(orb::Orbital{I,R}, occ::I) where {I,R}
+function terms(orb::Orbital{I,R,N}, occ::I) where {I,R,N}
     ℓ = orb.ℓ
     g = non_rel_degeneracy(orb)
     occ > g && throw(ArgumentError("Invalid occupancy $occ for $orb with degeneracy $g"))
@@ -102,7 +100,7 @@ end
 function terms(config::Configuration{I,R}) where {I,R}
     # We have to consider spin-up and spin-down electrons as
     # equivalent for LS term coupling to work properly.
-    orbitals = Dict{Orbital{I,R},I}()
+    orbitals = Dict{Orbital{I,R,<:Union{I,Symbol}},I}()
     for (orb,occ,state) in config
         orb_conj = flip_j(orb)
         if orb_conj ∈ keys(orbitals)

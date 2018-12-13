@@ -184,5 +184,8 @@ using Test
         @test terms(c"[Kr]") == [T"1S"]
         @test terms(c"[Xe]") == [T"1S"]
         @test terms(c"[Rn]") == [T"1S"]
+
+        @test terms(c"1s ks") == [T"1S", T"3S"]
+        @test terms(c"1s kp") == [T"1Po", T"3Po"]
     end
 end
