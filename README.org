@@ -24,45 +24,85 @@ bugs present in the latest release.
   #+RESULTS:
   : nothing
 
-  The ground state configuration of xenon:
-  #+BEGIN_SRC julia :exports both
-    Xe = c"[Kr] 5s2 5p6"
-  #+END_SRC
+** Electronic configurations
+   The ground state configuration of xenon:
+   #+BEGIN_SRC julia :exports both
+     Xe = c"[Kr] 5s2 5p6"
+   #+END_SRC
 
-  #+RESULTS:
-  : [Kr]ᶜ 5s² 5p⁻² 5p⁴
+   #+RESULTS:
+   : [Kr]ᶜ 5s² 5p⁻² 5p⁴
 
-  As we see above, by default, the krypton core is declared
-  "closed". This is useful for calculations when the core should be
-  frozen. We can "open" it by affixing =*=:
-  #+BEGIN_SRC julia :exports both
-    Xe = c"[Kr]* 5s2 5p6"
-  #+END_SRC
+   As we see above, by default, the krypton core is declared
+   "closed". This is useful for calculations when the core should be
+   frozen. We can "open" it by affixing =*=:
+   #+BEGIN_SRC julia :exports both
+     Xe = c"[Kr]* 5s2 5p6"
+   #+END_SRC
 
-  #+RESULTS:
-  : 1s² 2s² 2p⁻² 2p⁴ 3s² 3p⁻² 3p⁴ 3d⁻⁴ 3d⁶ 4s² 4p⁻² 4p⁴ 5s² 5p⁻² 5p⁴
+   #+RESULTS:
+   : 1s² 2s² 2p⁻² 2p⁴ 3s² 3p⁻² 3p⁴ 3d⁻⁴ 3d⁶ 4s² 4p⁻² 4p⁴ 5s² 5p⁻² 5p⁴
 
-  Note that the 5p shell was broken up into 2 5p- electrons and 4 5p
-  electrons. If we are not filling the shell, occupancy of the spin-up
-  and spin-down electrons has to be given separately:
+   Note that the 5p shell was broken up into 2 5p- electrons and 4 5p
+   electrons. If we are not filling the shell, occupancy of the spin-up
+   and spin-down electrons has to be given separately:
   
-  #+BEGIN_SRC julia :exports both
-    Xe⁺ = c"[Kr] 5s2 5p-2 5p3"
-  #+END_SRC
+   #+BEGIN_SRC julia :exports both
+     Xe⁺ = c"[Kr] 5s2 5p-2 5p3"
+   #+END_SRC
 
-  #+RESULTS:
-  : [Kr]ᶜ 5s² 5p⁻² 5p³
+   #+RESULTS:
+   : [Kr]ᶜ 5s² 5p⁻² 5p³
 
-  It is also possible to work with "continuum orbitals", where the
-  main quantum number is replaced by a =Symbol=:
+   It is also possible to work with "continuum orbitals", where the
+   main quantum number is replaced by a =Symbol=:
   
-  #+BEGIN_SRC julia :exports both
-    Xe⁺e = c"[Kr] 5s2 5p-2 5p3 ks"
-  #+END_SRC
+   #+BEGIN_SRC julia :exports both
+     Xe⁺e = c"[Kr] 5s2 5p-2 5p3 ks"
+   #+END_SRC
 
-  #+RESULTS:
-  : [Kr]ᶜ 5s² 5p⁻² 5p³ ks
+   #+RESULTS:
+   : [Kr]ᶜ 5s² 5p⁻² 5p³ ks
   
+** Orbitals
+   A single orbital is constructed this way:
+   #+BEGIN_SRC julia :exports both :results verbatim
+     o"5p-"
+   #+END_SRC
+
+   #+RESULTS:
+   : 5p⁻
+
+   Its parity, degeneracy, and non-relativistic degeneracy are given by
+   #+BEGIN_SRC julia :exports both :results verbatim
+     parity(o"5p-"),degeneracy(o"5p-"),non_rel_degeneracy(o"5p-")
+   #+END_SRC
+
+   #+RESULTS:
+   : (-1, 2, 6)
+
+   It is possible to generate a range of orbitals quickly:
+   #+BEGIN_SRC julia :exports both :results verbatim
+     os"5[d] 6[s-p] k[7-10]"
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+   13-element Array{Orbital{Int64,Rational{Int64},#s23} where #s23<:Union{Int64, Symbol},1}:
+    5d⁻
+    5d 
+    6s 
+    6p⁻
+    6p 
+    kk⁻
+    kk 
+    kl⁻
+    kl 
+    km⁻
+    km 
+    kn⁻
+    kn 
+   #+end_example
 
 ** Excitations
    We can easily generate all possible excitations from a reference
@@ -80,8 +120,7 @@ bugs present in the latest release.
    By appending virtual orbitals, we can generate excitations to
    configurations beyond those spanned by the reference set:
    #+BEGIN_SRC julia :exports both :results verbatim
-     excited_configurations(c"[Kr] 5s2 5p-2 5p3",
-                            o"6s", o"6p-", o"6p", o"5d-", o"5d")
+     excited_configurations(c"[Kr] 5s2 5p-2 5p3", os"5[d] 6[s-p]"...)
    #+END_SRC
 
    #+RESULTS:
@@ -135,8 +174,7 @@ bugs present in the latest release.
    ground state:
    
    #+BEGIN_SRC julia :exports both :results verbatim
-     Xe⁺e = excited_configurations(c"[Kr] 5s2 5p6",
-                                   o"ks", o"kp-", o"kp", o"kd-", o"kd",
+     Xe⁺e = excited_configurations(c"[Kr] 5s2 5p6", os"k[s-d]"...,
                                    max_excitations=:singles,
                                    keep_parity=false)
    #+END_SRC
@@ -167,57 +205,57 @@ bugs present in the latest release.
    #+BEGIN_SRC julia :exports both :results verbatim
      map(Xe⁺e) do c
          b = bound(c)
-         b, num_electrons(b)
+         num_electrons(b) => b
      end
    #+END_SRC
 
    #+RESULTS:
    #+begin_example
-   16-element Array{Tuple{Configuration{Int64,Rational{Int64}},Int64},1}:
-    (5s² 5p⁻² 5p⁴, 8)
-    (5s 5p⁻² 5p⁴, 7) 
-    (5s 5p⁻² 5p⁴, 7) 
-    (5s 5p⁻² 5p⁴, 7) 
-    (5s 5p⁻² 5p⁴, 7) 
-    (5s 5p⁻² 5p⁴, 7) 
-    (5s² 5p⁻ 5p⁴, 7) 
-    (5s² 5p⁻ 5p⁴, 7) 
-    (5s² 5p⁻ 5p⁴, 7) 
-    (5s² 5p⁻ 5p⁴, 7) 
-    (5s² 5p⁻ 5p⁴, 7) 
-    (5s² 5p⁻² 5p³, 7)
-    (5s² 5p⁻² 5p³, 7)
-    (5s² 5p⁻² 5p³, 7)
-    (5s² 5p⁻² 5p³, 7)
-    (5s² 5p⁻² 5p³, 7)
+   16-element Array{Pair{Int64,Configuration{Int64,Rational{Int64}}},1}:
+    8 => 5s² 5p⁻² 5p⁴
+    7 => 5s 5p⁻² 5p⁴ 
+    7 => 5s 5p⁻² 5p⁴ 
+    7 => 5s 5p⁻² 5p⁴ 
+    7 => 5s 5p⁻² 5p⁴ 
+    7 => 5s 5p⁻² 5p⁴ 
+    7 => 5s² 5p⁻ 5p⁴ 
+    7 => 5s² 5p⁻ 5p⁴ 
+    7 => 5s² 5p⁻ 5p⁴ 
+    7 => 5s² 5p⁻ 5p⁴ 
+    7 => 5s² 5p⁻ 5p⁴ 
+    7 => 5s² 5p⁻² 5p³
+    7 => 5s² 5p⁻² 5p³
+    7 => 5s² 5p⁻² 5p³
+    7 => 5s² 5p⁻² 5p³
+    7 => 5s² 5p⁻² 5p³
    #+end_example
    
    #+BEGIN_SRC julia :exports both :results verbatim
      map(Xe⁺e) do c
          b = continuum(c)
-         b, num_electrons(b)
+         num_electrons(b) => b
      end
    #+END_SRC
 
    #+RESULTS:
    #+begin_example
-   16-element Array{Tuple{Configuration{Int64,Rational{Int64}},Int64},1}:
-    (, 0)   
-    (ks, 1) 
-    (kp⁻, 1)
-    (kp, 1) 
-    (kd⁻, 1)
-    (kd, 1) 
-    (ks, 1) 
-    (kp⁻, 1)
-    (kp, 1) 
-    (kd⁻, 1)
-    (kd, 1) 
-    (ks, 1) 
-    (kp⁻, 1)
-    (kp, 1) 
-    (kd⁻, 1)
-    (kd, 1) 
+   16-element Array{Pair{Int64,Configuration{Int64,Rational{Int64}}},1}:
+    0 =>    
+    1 => ks 
+    1 => kp⁻
+    1 => kp 
+    1 => kd⁻
+    1 => kd 
+    1 => ks 
+    1 => kp⁻
+    1 => kp 
+    1 => kd⁻
+    1 => kd 
+    1 => ks 
+    1 => kp⁻
+    1 => kp 
+    1 => kd⁻
+    1 => kd 
    #+end_example
 
 ** Term symbol calculation

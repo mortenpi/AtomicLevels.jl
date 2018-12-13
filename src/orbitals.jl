@@ -50,16 +50,25 @@ function Base.isless(a::Orbital, b::Orbital)
     false
 end
 
+parse_orbital_n(m::RegexMatch,i=1) =
+    isnumeric(m[i][1]) ? parse(Int, m[i]) : Symbol(m[i])
+
+function parse_orbital_ℓ(m::RegexMatch,i=2)
+    ℓs = strip(m[i], ['[',']'])
+    if isnumeric(ℓs[1])
+        parse(Int, ℓs)
+    else
+        ℓi = findfirst(ℓs, spectroscopic)
+        isnothing(ℓi) && throw(ArgumentError("Invalid spectroscopic label: $(m[i])"))
+        first(ℓi) - 1
+    end
+end
+
 function orbital_from_string(orb_str::AbstractString)
     m = match(r"^([0-9]+|.)([a-z]|\[[0-9]+\])([-]{0,1})$", orb_str)
     m === nothing && throw(ArgumentError("Invalid orbital string: $(orb_str)"))
-    n = isnumeric(m[1][1]) ? parse(Int, m[1]) : Symbol(m[1])
-    ℓi = findfirst(m[2], spectroscopic)
-    ℓ = if ℓi === nothing
-        parse(Int, strip(m[2], ['[', ']']))
-    else
-        first(ℓi) - 1
-    end
+    n = parse_orbital_n(m)
+    ℓ = parse_orbital_ℓ(m)
     j = ℓ + (m[3] == "-" ? -1 : 1)*1//2
     Orbital(n, ℓ, j)
 end
@@ -68,4 +77,22 @@ macro o_str(orb_str)
     orbital_from_string(orb_str)
 end
 
-export Orbital, @o_str, degeneracy, non_rel_degeneracy, parity
+function orbitals_from_string(orbs_str::AbstractString)
+    map(split(orbs_str)) do orb_str
+        m = match(r"^([0-9]+|.)\[([a-z]|[0-9]+)(-([a-z]|[0-9]+)){0,1}\]$", strip(orb_str))
+        m === nothing && throw(ArgumentError("Invalid orbitals string: $(orb_str)"))
+        n = parse_orbital_n(m)
+        ℓs = map(filter(i -> !isnothing(m[i]), [2,4])) do i
+            parse_orbital_ℓ(m, i)
+        end
+        orbs = map(ℓ -> Orbital(n, ℓ, ℓ-1//2), max(first(ℓs),1):last(ℓs))
+        append!(orbs, map(ℓ -> Orbital(n, ℓ, ℓ+1//2), first(ℓs):last(ℓs)))
+        sort(orbs)
+    end |> o -> vcat(o...) |> sort
+end
+
+macro os_str(orbs_str)
+    orbitals_from_string(orbs_str)
+end
+
+export Orbital, @o_str, @os_str, degeneracy, non_rel_degeneracy, parity

@@ -20,6 +20,12 @@ using Random
             [o"1s", o"2p", o"kp", o"ls"]
     end
 
+    @testset "Range of orbitals" begin
+        @test os"6[s-d] 5[d]" == [o"5d-", o"5d", o"6s", o"6p-", o"6p", o"6d-", o"6d"]
+        @test os"k[s-g] l[s-g]" == [o"ks", o"kp-", o"kp", o"kd-", o"kd", o"kf-", o"kf", o"kg-", o"kg",
+                                    o"ls", o"lp-", o"lp", o"ld-", o"ld", o"lf-", o"lf", o"lg-", o"lg"]
+    end
+
     @testset "Flip j" begin
         @test AtomicLevels.flip_j(o"1s") == o"1s"
         @test AtomicLevels.flip_j(o"2p-") == o"2p"
