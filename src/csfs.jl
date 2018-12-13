@@ -76,4 +76,4 @@ function Base.show(io::IO, csf::CSF{I,R,R}) where {I<:Integer,R<:Rational{I}}
     print(io, parity(csf.config) == 1 ? "+" : "-")
 end
 
-export csfs
+export CSF, csfs
