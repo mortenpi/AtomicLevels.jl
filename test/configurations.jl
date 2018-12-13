@@ -35,6 +35,8 @@
     @testset "Access subsets" begin
         @test core(c"[Kr]c 5s2") == c"[Kr]c"
         @test peel(c"[Kr]c 5s2") == c"5s2"
+        @test core(c"[Kr]c 5s2c 5p6") == c"[Kr]c 5s2c"
+        @test peel(c"[Kr]c 5s2c 5p6") == c"5p6"
         @test active(c"[Kr]c 5s2") == c"5s2"
         @test inactive(c"[Kr]c 5s2i") == c"5s2i"
         @test inactive(c"[Kr]c 5s2") == c""
@@ -42,6 +44,10 @@
         @test continuum(c"[Kr] 5s2 5p-2 5p3 ks") == c"ks"
         @test bound(c"[Kr] 5s2 5p-2 5p2 ks ld") == c"[Kr] 5s2 5p-2 5p2"
         @test continuum(c"[Kr] 5s2 5p-2 5p2 ks ld") == c"ks ld"
+
+        @test c"[Ne]"[1] == (o"1s",2,:closed)
+        @test c"[Ne]"[1:2] == c"1s2c 2s2c"
+        @test c"[Ne]"[end-1:end] == c"2p6c"
 
         @test o"1s" ∈ c"[He]"
     end
@@ -82,10 +88,13 @@
              Xe⁺ => "[Kr]ᶜ 5s² 5p⁻² 5p³",
              core(Xe⁺) => "[Kr]ᶜ",
              peel(Xe⁺) => "5s² 5p⁻² 5p³",
+             c"[Kr] 5s2c 5p6" => "[Kr]ᶜ 5s²ᶜ 5p⁻² 5p⁴",
+             c"[Ne]"[end-1:end] => "2p⁻²ᶜ 2p⁴ᶜ",
              c"5s2" => "5s²",
              c"[Kr]*" => "1s² 2s² 2p⁻² 2p⁴ 3s² 3p⁻² 3p⁴ 3d⁻⁴ 3d⁶ 4s² 4p⁻² 4p⁴",
              c"[Kr]c" =>"[Kr]ᶜ",
-             c"1s2 kp" => "1s² kp"]) do (c,s)
+             c"1s2 kp" => "1s² kp",
+             c"" => "∅"]) do (c,s)
                  @test "$(c)" == s
              end
     end

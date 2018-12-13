@@ -87,13 +87,31 @@ function write_orbitals(io::IO, config::Configuration)
 end
 
 function Base.show(io::IO, config::Configuration)
+    nc = length(config)
+    if nc == 0
+        write(io, "∅")
+        return
+    end
     core_config = core(config)
+    ncc = length(core_config)
     if length(core_config) > 0
-        for (gas,cfg) in noble_gases
-            if issimilar(core_config, cfg)
+        core_printed = false
+        for gas in ["Rn", "Xe", "Kr", "Ar", "Ne", "He"]
+            gas_cfg = noble_gases[gas]
+            ngc = length(gas_cfg)
+            if ncc ≥ ngc && issimilar(core_config[1:length(gas_cfg)], gas_cfg)
                 write(io, "[$(gas)]ᶜ")
-                length(config) > length(core_config) && write(io, " ")
+                if ncc > ngc
+                    write(io, " ")
+                    write_orbitals(io, core_config[ngc+1:end])
+                end
+                nc > ncc && write(io, " ")
+                core_printed = true
+                break
             end
+        end
+        if !core_printed
+            write_orbitals(io, core_config)
         end
     end
     write_orbitals(io, peel(config))
@@ -154,13 +172,16 @@ for gas in ("He" => "1s2",
     noble_gases[gas[1]] = configuration_from_string(gas[2])
 end
 
-Base.getindex(conf::Configuration{I,R}, i) where {I,R} =
+Base.getindex(conf::Configuration{I,R}, i::Integer) where {I,R} =
     (conf.orbitals[i], conf.occupancy[i], conf.states[i])
+Base.getindex(conf::Configuration{I,R}, i::Union{<:UnitRange{<:Integer},<:AbstractVector{<:Integer}}) where {I,R} =
+    Configuration([conf[ii] for ii in i])
 
 Base.iterate(conf::Configuration{I,R}, (el, i)=(length(conf)>0 ? conf[1] : nothing,1)) where {I,R} =
     i > length(conf) ? nothing : (el, (conf[i==length(conf) ? i : i+1],i+1))
 
 Base.length(conf::Configuration) = length(conf.orbitals)
+Base.lastindex(conf::Configuration) = length(conf)
 Base.eltype(conf::Configuration{I,R}) where {I,R} = (Orbital{I,R},I,Symbol)
 
 num_electrons(conf::Configuration) = sum(conf.occupancy)
@@ -169,7 +190,7 @@ Base.in(orb::Orbital{I,R}, conf::Configuration{I,R}) where {I,R} =
     orb ∈ conf.orbitals
 
 Base.filter(f::Function, conf::Configuration) =
-    Configuration(conf[filter(j -> f(conf[j]...), eachindex(conf.orbitals))]...)
+    conf[filter(j -> f(conf[j]...), eachindex(conf.orbitals))]
 
 core(conf::Configuration) = filter((orb,occ,state) -> state == :closed, conf)
 peel(conf::Configuration) = filter((orb,occ,state) -> state != :closed, conf)
