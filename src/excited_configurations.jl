@@ -3,8 +3,7 @@ function single_excitations!(excitations::Vector{Configuration{I,R}},
                              orbitals::Vector{Orbital{I,R}},
                              min_occupancy::Vector{I},
                              max_occupancy::Vector{I},
-                             excite_from::I,
-                             keep_parity::Bool=true) where {I,R}
+                             excite_from::I) where {I,R}
     for config ∈ excitations[end-excite_from+1:end]
         for (orb,occ,state) ∈ config
             state != :open && continue
@@ -15,7 +14,6 @@ function single_excitations!(excitations::Vector{Configuration{I,R}},
             !isnothing(i) && occ == min_occupancy[i] && continue
             for subs_orb ∈ orbitals
                 subs_orb == orb && continue
-                keep_parity && parity(subs_orb) != parity(orb) && continue
                 # If the proposed substitution orbital is among those
                 # from the reference set and already present in the
                 # configuration to excite, we check if it is already
@@ -63,9 +61,10 @@ function excited_configurations(ref_set::Configuration{I,R},
     excite_from = 1
     for i in 1:max_excitations
         single_excitations!(excitations, ref_set_peel, orbitals,
-                            min_occupancy, max_occupancy, excite_from, keep_parity)
+                            min_occupancy, max_occupancy, excite_from)
         excite_from = length(excitations)-excite_from
     end
+    keep_parity && filter!(e -> parity(e) == parity(ref_set), excitations)
 
     [ref_set_core + e for e in excitations]
 end
