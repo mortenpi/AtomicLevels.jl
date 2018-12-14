@@ -1,7 +1,23 @@
-# This file is machine-generated - editing it directly is not advised
+[[BandedMatrices]]
+deps = ["FillArrays", "LazyArrays", "LinearAlgebra", "Random", "SparseArrays", "Test"]
+git-tree-sha1 = "04a5e589951a6051669560485aa41410201ddec3"
+uuid = "aae01518-5342-5314-be14-df237901396f"
+version = "0.8.0"
 
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+
+[[BlockArrays]]
+deps = ["Base64", "LinearAlgebra", "SparseArrays", "Test"]
+git-tree-sha1 = "274280f8a1163553d2a5ff87770a490047147e55"
+uuid = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
+version = "0.6.0"
+
+[[BlockBandedMatrices]]
+deps = ["BandedMatrices", "BlockArrays", "Distributed", "FillArrays", "LazyArrays", "LinearAlgebra", "Pkg", "Profile", "Random", "SharedArrays", "SparseArrays", "Statistics", "Test"]
+git-tree-sha1 = "9afde8e994241a0d51fbea6eb2d5313ac4a6a944"
+uuid = "ffab5731-97b5-5995-9138-79e8c1846df0"
+version = "0.3.2"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
@@ -18,8 +34,14 @@ deps = ["Mmap"]
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[Distributed]]
-deps = ["Random", "Serialization", "Sockets"]
+deps = ["LinearAlgebra", "Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+
+[[FillArrays]]
+deps = ["LinearAlgebra", "Random", "SparseArrays", "Test"]
+git-tree-sha1 = "d87b7fc5c086cf157deabec625d53ba55eca6436"
+uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
+version = "0.3.0"
 
 [[Formatting]]
 deps = ["Compat"]
@@ -28,8 +50,14 @@ uuid = "59287772-0a20-5a39-b81b-1366585eb4c0"
 version = "0.3.5"
 
 [[InteractiveUtils]]
-deps = ["Markdown"]
+deps = ["LinearAlgebra", "Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+
+[[LazyArrays]]
+deps = ["FillArrays", "LinearAlgebra", "StaticArrays", "Test"]
+git-tree-sha1 = "282c4d8f504748fcf2530f1f34713c3581093ffc"
+uuid = "5078a376-72f3-5289-bfd5-ec5146d43c02"
+version = "0.5.0"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
@@ -67,9 +95,19 @@ version = "0.10.2"
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
+[[Primes]]
+deps = ["Test"]
+git-tree-sha1 = "ff1a2323cb468ec5f201838fcbe3c232266b1f95"
+uuid = "27ebfcd6-29c5-5fa9-bf4b-fb8fc14df3ae"
+version = "0.4.0"
+
 [[Printf]]
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[[Profile]]
+deps = ["Printf"]
+uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets"]
@@ -96,6 +134,12 @@ uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 deps = ["LinearAlgebra", "Random"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
+[[StaticArrays]]
+deps = ["InteractiveUtils", "LinearAlgebra", "Random", "Statistics", "Test"]
+git-tree-sha1 = "97c4bf0f647488dd7ac01ea12be5885f88762938"
+uuid = "90137ffa-7385-5640-81b9-e52037218182"
+version = "0.10.0"
+
 [[Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -105,7 +149,7 @@ deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[UUIDs]]
-deps = ["Random", "SHA"]
+deps = ["Random"]
 uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[Unicode]]
@@ -116,3 +160,9 @@ deps = ["Test"]
 git-tree-sha1 = "63cbbd00217fc9aafedf055b60459c1ae7e01ecc"
 uuid = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 version = "0.4.0"
+
+[[WignerSymbols]]
+deps = ["LinearAlgebra", "Primes", "Test"]
+git-tree-sha1 = "66da5f3ac23d153bdb7892ceafe031bb0e05e701"
+uuid = "9f57e263-0b3d-5e2e-b1be-24f2bb48858b"
+version = "0.2.0"
