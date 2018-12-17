@@ -11,6 +11,10 @@ using Random
         @test o"ϵd-" == Orbital(:ϵ,2,3//2)
 
         @test_throws ArgumentError AtomicLevels.orbital_from_string("sdkfl")
+
+        @test_throws ArgumentError Orbital(0, 0)
+        @test_throws ArgumentError Orbital(1, 1)
+        @test_throws ArgumentError Orbital(1, 0, 3//2)
     end
 
     @testset "Order" begin
