@@ -62,12 +62,12 @@ using Random
     end
 
     @testset "Parity" begin
-        @test parity(o"1s") == 1
-        @test parity(o"2p") == -1
-        @test parity(o"3s") == 1
-        @test parity(o"3p") == -1
-        @test parity(o"3d") == 1
+        @test iseven(parity(o"1s"))
+        @test isodd(parity(o"2p"))
+        @test iseven(parity(o"3s"))
+        @test isodd(parity(o"3p"))
+        @test iseven(parity(o"3d"))
 
-        @test parity(o"kp") == -1
+        @test isodd(parity(o"kp"))
     end
 end

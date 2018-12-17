@@ -7,6 +7,7 @@ using BlockBandedMatrices
 using WignerSymbols
 
 include("common.jl")
+include("parity.jl")
 include("orbitals.jl")
 include("configurations.jl")
 include("excited_configurations.jl")

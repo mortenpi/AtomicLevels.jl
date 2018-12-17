@@ -73,7 +73,7 @@ function Base.show(io::IO, csf::CSF{I,R}) where {I<:Integer,R<:Rational{I}}
             printfmt(io, rfmt, numerator(j))
         end
     end
-    print(io, parity(csf.config) == 1 ? "+" : "-")
+    print(io, iseven(parity(csf.config)) ? "+" : "-")
 end
 
 export CSF, csfs

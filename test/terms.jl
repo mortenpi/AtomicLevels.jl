@@ -4,17 +4,19 @@ using Test
 
 @testset "Terms" begin
     @testset "Construction" begin
+        @test T"1S" == Term(0, 0, p"even")
         @test T"1S" == Term(0, 0, 1)
-        @test T"1Se" == Term(0, 0, 1)
+        @test T"1Se" == Term(0, 0, p"even")
+        @test T"1So" == Term(0, 0, p"odd")
         @test T"1So" == Term(0, 0, -1)
-        @test T"2So" == Term(0, 1//2, -1)
-        @test T"4P" == Term(1, 3//2, 1)
-        @test T"3D" == Term(2, 1, 1)
-        @test T"3Do" == Term(2, 1, -1)
-        @test T"1[54]" == Term(54, 0, 1)
-        @test T"1[3/2]" == Term(3//2, 0, 1)
-        @test T"2[3/2]o" == Term(3//2, 1//2, -1)
-        
+        @test T"2So" == Term(0, 1//2, p"odd")
+        @test T"4P" == Term(1, 3//2, p"even")
+        @test T"3D" == Term(2, 1, p"even")
+        @test T"3Do" == Term(2, 1, p"odd")
+        @test T"1[54]" == Term(54, 0, p"even")
+        @test T"1[3/2]" == Term(3//2, 0, p"even")
+        @test T"2[3/2]o" == Term(3//2, 1//2, p"odd")
+
         @test_throws ArgumentError AtomicLevels.term_string("1[4/3]")
         @test_throws ArgumentError AtomicLevels.term_string("1[43/]")
         @test_throws ArgumentError AtomicLevels.term_string("1[/43/]")
@@ -101,7 +103,7 @@ using Test
 
         function test_orbital_terms(o_ts::Pair{<:ST,<:Vector{ST}}) where {ST<:AbstractString}
             orb,occ = get_orbital(o_ts[1])
-            
+
             p = parity(orb)^occ[1]
             ts = o_ts[2]
 
@@ -154,22 +156,25 @@ using Test
 
         @test_throws ArgumentError terms(o"2p", 7)
     end
-        
+
     @testset "Coupling" begin
         # Coupling two 2S terms should yields singlets and triplets of S,P,D
         @test couple_terms(Term(1,1//2,1), Term(1,1//2,1)) ==
-            sort([Term(2,0,1), Term(2,1,1), Term(0,0,1), Term(1,1,1), Term(1,0,1), Term(0,1,1)])    
-        
+            sort([Term(2,0,1), Term(2,1,1), Term(0,0,1), Term(1,1,1), Term(1,0,1), Term(0,1,1)])
+
         @test couple_terms(Term(0,1//2,1), Term(1,1//2,-1)) ==
             sort([Term(1,0,-1), Term(1,1,-1)])
-        
+
+        @test couple_terms(Term(0,1//2,-1), Term(1,1//2,-1)) ==
+            sort([Term(1,0,1), Term(1,1,1)])
+
         function test_coupling(o1, o2)
             c1 = couple_terms(terms(o1), terms(o2))
             r = o1 + o2
             c2 = terms(r)
             @test c1 == c2
         end
-        
+
         test_coupling(c"1s", c"2p")
         test_coupling(c"2s", c"2p")
         test_coupling(c"2p", c"3p")

@@ -35,7 +35,7 @@ flip_j(orb::Orbital) = Orbital(orb.n, orb.ℓ, orb.ℓ > 0 ? orb.ℓ - (orb.j - 
 degeneracy(orb::Orbital{I,N}) where {I,N} = 2orb.j + 1 |> I
 non_rel_degeneracy(orb::Orbital) =
     orb.ℓ == 0 ? 2 : degeneracy(orb)+degeneracy(flip_j(orb))
-parity(orb::Orbital{I,N}) where {I,N} = (-one(I))^orb.ℓ
+parity(orb::Orbital{I,N}) where {I,N} = p"odd"^orb.ℓ
 
 nisless(an::T, bn::T) where T = an < bn
 # Our convention is that symbolic quantum numbers are always greater

@@ -1,9 +1,10 @@
 struct Term{I<:Integer,LT<:Union{I,Rational{I}}}
     L::LT
     S::Rational{I}
-    parity::I
+    parity::Parity
 end
-Term(L::LT, S::I, parity::I) where {I<:Integer,LT<:Union{I,Rational{I}}} = Term{I,LT}(L,Rational{I}(S), parity)
+Term(L::LT, S::I, parity::Parity) where {I<:Integer,LT<:Union{I,Rational{I}}} = Term{I,LT}(L,Rational{I}(S), parity)
+Term(L, S, parity::Integer) = Term(L, S, convert(Parity, parity))
 
 function term_string(s::AbstractString)
     m = match(r"([0-9]+)([A-Z]|\[[0-9/]+\])([oe ]{0,1})", s)
@@ -24,7 +25,7 @@ function term_string(s::AbstractString)
     end
     denominator(L) ∈ [1,2] || throw(ArgumentError("L must be integer or half-integer"))
     S = (parse(Int, m[1]) - 1)//2
-    Term(L, S, m[3] == "o" ? -1 : 1)
+    Term(L, S, m[3] == "o" ? p"odd" : p"even")
 end
 
 macro T_str(s::AbstractString)
@@ -73,7 +74,7 @@ couple_terms(ts::Vector{<:Vector{<:Term}}) = foldl(couple_terms, ts)
 include("xu2006.jl")
 
 # This function calculates the term symbol for a given orbital ℓʷ
-function xu_terms(ℓ::I, w::I, p::I) where {I<:Integer}
+function xu_terms(ℓ::I, w::I, p::Parity) where {I<:Integer}
     ts = map(((w//2 - floor(Int, w//2)):w//2)) do S
         S′ = 2S |> I
         map(L -> repeat([Term(L,S,p)], Xu.X(w,ℓ, S′, L)), 0:w*ℓ)
@@ -91,7 +92,7 @@ function terms(orb::Orbital{I,N}, occ::I) where {I,N}
     if occ == 1
         [Term(ℓ,1//2,p)] # Single electron
     elseif ℓ == 0 && occ == 2 || occ == non_rel_degeneracy(orb)
-        [Term(0,0,1)] # Filled ℓ shell
+        [Term(0,0,p"even")] # Filled ℓ shell
     else
         xu_terms(ℓ, occ, p) # All other cases
     end
@@ -125,7 +126,7 @@ write_L(io::IO, term::Term{I,R}) where {I<:Integer,R<:Rational{I}} =
 function Base.show(io::IO, term::Term)
     write(io, to_superscript(multiplicity(term)))
     write_L(io, term)
-    term.parity == -1 && write(io, "ᵒ")
+    write(io, to_superscript(term.parity))
 end
 
 export Term, @T_str, multiplicity, weight, couple_terms, terms

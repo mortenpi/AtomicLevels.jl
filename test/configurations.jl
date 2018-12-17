@@ -53,18 +53,18 @@
     end
 
     @testset "Parity" begin
-        @test parity(c"1s") == 1
-        @test parity(c"1s2") == 1
-        @test parity(c"1s2 2s") == 1
-        @test parity(c"1s2 2s2") == 1
-        @test parity(c"[He]c 2s") == 1
-        @test parity(c"[He]c 2s2") == 1
-        @test parity(c"[He]c 2s 2p") == -1
-        @test parity(c"[He]c 2s2 2p") == -1
-        @test parity(c"[He]c 2s 2p2") == 1
-        @test parity(c"[He]c 2s2 2p2") == 1
-        @test parity(c"[He]c 2s2 2p2 3d") == 1
-        @test parity(c"[He]c 2s kp") == -1
+        @test iseven(parity(c"1s"))
+        @test iseven(parity(c"1s2"))
+        @test iseven(parity(c"1s2 2s"))
+        @test iseven(parity(c"1s2 2s2"))
+        @test iseven(parity(c"[He]c 2s"))
+        @test iseven(parity(c"[He]c 2s2"))
+        @test isodd(parity(c"[He]c 2s 2p"))
+        @test isodd(parity(c"[He]c 2s2 2p"))
+        @test iseven(parity(c"[He]c 2s 2p2"))
+        @test iseven(parity(c"[He]c 2s2 2p2"))
+        @test iseven(parity(c"[He]c 2s2 2p2 3d"))
+        @test isodd(parity(c"[He]c 2s kp"))
     end
 
     @testset "Number of electrons" begin
