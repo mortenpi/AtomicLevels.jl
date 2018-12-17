@@ -1,9 +1,9 @@
-struct Term{I<:Integer,R<:Rational{I},LT<:Union{I,R}}
+struct Term{I<:Integer,LT<:Union{I,Rational{I}}}
     L::LT
-    S::R
+    S::Rational{I}
     parity::I
 end
-Term(L::LT, S::I, parity::I) where {I<:Integer,LT<:Union{I,Rational{I}}} = Term{I,Rational{I},LT}(L,Rational{I}(S), parity)
+Term(L::LT, S::I, parity::I) where {I<:Integer,LT<:Union{I,Rational{I}}} = Term{I,LT}(L,Rational{I}(S), parity)
 
 function term_string(s::AbstractString)
     m = match(r"([0-9]+)([A-Z]|\[[0-9/]+\])([oe ]{0,1})", s)
@@ -81,7 +81,7 @@ function xu_terms(ℓ::I, w::I, p::I) where {I<:Integer}
     vcat(vcat(ts...)...)
 end
 
-function terms(orb::Orbital{I,R,N}, occ::I) where {I,R,N}
+function terms(orb::Orbital{I,N}, occ::I) where {I,N}
     ℓ = orb.ℓ
     g = non_rel_degeneracy(orb)
     occ > g && throw(ArgumentError("Invalid occupancy $occ for $orb with degeneracy $g"))
@@ -97,10 +97,10 @@ function terms(orb::Orbital{I,R,N}, occ::I) where {I,R,N}
     end
 end
 
-function terms(config::Configuration{I,R}) where {I,R}
+function terms(config::Configuration{I}) where I
     # We have to consider spin-up and spin-down electrons as
     # equivalent for LS term coupling to work properly.
-    orbitals = Dict{Orbital{I,R,<:Union{I,Symbol}},I}()
+    orbitals = Dict{Orbital{I,<:Union{I,Symbol}},I}()
     for (orb,occ,state) in config
         orb_conj = flip_j(orb)
         if orb_conj ∈ keys(orbitals)
@@ -116,10 +116,10 @@ function terms(config::Configuration{I,R}) where {I,R}
     couple_terms(ts)
 end
 
-write_L(io::IO, term::Term{I,R,I}) where {I<:Integer,R<:Rational{I}} =
+write_L(io::IO, term::Term{I,I}) where {I<:Integer} =
     write(io, uppercase(spectroscopic_label(term.L)))
 
-write_L(io::IO, term::Term{I,R,R}) where {I<:Integer,R<:Rational{I}} =
+write_L(io::IO, term::Term{I,R}) where {I<:Integer,R<:Rational{I}} =
     write(io, "[$(numerator(term.L))/$(denominator(term.L))]")
 
 function Base.show(io::IO, term::Term)

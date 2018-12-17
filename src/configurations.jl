@@ -1,11 +1,11 @@
-struct Configuration{I<:Integer,R<:Rational{I}}
-    orbitals::Vector{<:Orbital{I,R,<:MQ{I}}}
+struct Configuration{I<:Integer}
+    orbitals::Vector{<:Orbital{I,<:MQ{I}}}
     occupancy::Vector{I}
     states::Vector{Symbol}
     function Configuration(
-        orbitals::Vector{<:Orbital{I,R,<:MQ{I}}},
+        orbitals::Vector{<:Orbital{I,<:MQ{I}}},
         occupancy::Vector{I},
-        states::Vector{Symbol}=[:open for o in orbitals]) where {I<:Integer,R<:Rational{I}}
+        states::Vector{Symbol}=[:open for o in orbitals]) where {I<:Integer}
         length(orbitals) == length(occupancy) || throw(ArgumentError("Need to specify occupation numbers for all orbitals"))
         length(states) ≤ length(orbitals) || throw(ArgumentError("Cannot provide more states than orbitals"))
 
@@ -45,12 +45,12 @@ struct Configuration{I<:Integer,R<:Rational{I}}
 
         p = sortperm(orbitals)
 
-        new{I,R}(orbitals[p], occupancy[p], states[p])
+        new{I}(orbitals[p], occupancy[p], states[p])
     end
 end
 
-function Configuration(orbs::Vector{<:Tuple{<:Orbital{I,R,<:MQ{I}},I,Symbol}}) where {I<:Integer,R<:Rational}
-    orbitals = Vector{Orbital{I,R,<:MQ{I}}}()
+function Configuration(orbs::Vector{<:Tuple{<:Orbital{I,<:MQ{I}},I,Symbol}}) where {I<:Integer}
+    orbitals = Vector{Orbital{I,<:MQ{I}}}()
     occupancy = Vector{I}()
     states = Vector{Symbol}()
     for (orb,occ,state) in orbs
@@ -61,17 +61,17 @@ function Configuration(orbs::Vector{<:Tuple{<:Orbital{I,R,<:MQ{I}},I,Symbol}}) w
     Configuration(orbitals, occupancy, states)
 end
 
-Configuration(orbital::Orbital{I,R,<:MQ{I}}, occupancy::I, state::Symbol=:open) where {I<:Integer,R<:Rational{I}} =
+Configuration(orbital::Orbital{I,<:MQ{I}}, occupancy::I, state::Symbol=:open) where {I<:Integer} =
     Configuration([orbital], [occupancy], [state])
 
-Configuration{I,R}() where {I,R} =
-    Configuration(Orbital{I,R,<:MQ{I}}[], I[], Symbol[])
+Configuration{I}() where I =
+    Configuration(Orbital{I,<:MQ{I}}[], I[], Symbol[])
 
-issimilar(a::Configuration{I,R}, b::Configuration{I,R}) where {I,R} =
+issimilar(a::Configuration{I}, b::Configuration{I}) where I =
     a.orbitals == b.orbitals && a.occupancy == b.occupancy
 
 import Base: ==
-==(a::Configuration{I,R}, b::Configuration{I,R}) where {I,R} =
+==(a::Configuration{I}, b::Configuration{I}) where I =
     issimilar(a, b) && a.states == b.states
 
 noble_gases = Dict{String,Configuration}()
@@ -141,7 +141,7 @@ function parse_orbital(orb_str)
 end
 
 function configuration_from_string(conf_str::AbstractString)
-    isempty(conf_str) && return Configuration{Int,Rational{Int}}()
+    isempty(conf_str) && return Configuration{Int}()
     orbs = split(conf_str, r"[\. ]")
     core_m = match(r"\[([a-zA-Z]+)\]([*ci]{0,1})", first(orbs))
     if core_m != nothing
@@ -172,21 +172,21 @@ for gas in ("He" => "1s2",
     noble_gases[gas[1]] = configuration_from_string(gas[2])
 end
 
-Base.getindex(conf::Configuration{I,R}, i::Integer) where {I,R} =
+Base.getindex(conf::Configuration{I}, i::Integer) where I =
     (conf.orbitals[i], conf.occupancy[i], conf.states[i])
-Base.getindex(conf::Configuration{I,R}, i::Union{<:UnitRange{<:Integer},<:AbstractVector{<:Integer}}) where {I,R} =
+Base.getindex(conf::Configuration{I}, i::Union{<:UnitRange{<:Integer},<:AbstractVector{<:Integer}}) where I =
     Configuration([conf[ii] for ii in i])
 
-Base.iterate(conf::Configuration{I,R}, (el, i)=(length(conf)>0 ? conf[1] : nothing,1)) where {I,R} =
+Base.iterate(conf::Configuration{I}, (el, i)=(length(conf)>0 ? conf[1] : nothing,1)) where I =
     i > length(conf) ? nothing : (el, (conf[i==length(conf) ? i : i+1],i+1))
 
 Base.length(conf::Configuration) = length(conf.orbitals)
 Base.lastindex(conf::Configuration) = length(conf)
-Base.eltype(conf::Configuration{I,R}) where {I,R} = (Orbital{I,R},I,Symbol)
+Base.eltype(conf::Configuration{I}) where I = (Orbital{I},I,Symbol)
 
 num_electrons(conf::Configuration) = sum(conf.occupancy)
 
-Base.in(orb::Orbital{I,R}, conf::Configuration{I,R}) where {I,R} =
+Base.in(orb::Orbital{I}, conf::Configuration{I}) where I =
     orb ∈ conf.orbitals
 
 Base.filter(f::Function, conf::Configuration) =
@@ -202,7 +202,7 @@ continuum(conf::Configuration) = filter((orb,occ,state) -> orb.n isa Symbol, pee
 parity(conf::Configuration) = (-1)^mapreduce(o -> o[1].ℓ*o[2], +, conf)
 Base.count(conf::Configuration) = mapreduce(o -> o[2], +, conf)
 
-function Base.replace(conf::Configuration{I,R}, orbs::Pair{Orbital{I,R,N₁},Orbital{I,R,N₂}}) where {I,R,N₁,N₂}
+function Base.replace(conf::Configuration{I}, orbs::Pair{Orbital{I,N₁},Orbital{I,N₂}}) where {I,N₁,N₂}
     src,dest = orbs
     orbitals = copy(conf.orbitals)
     occupancy = copy(conf.occupancy)
@@ -233,7 +233,7 @@ function Base.replace(conf::Configuration{I,R}, orbs::Pair{Orbital{I,R,N₁},Orb
 end
 
 import Base: +
-function +(a::Configuration{I,R}, b::Configuration{I,R}) where {I,R}
+function +(a::Configuration{I}, b::Configuration{I}) where I
     orbitals = copy(a.orbitals)
     occupancy = copy(a.occupancy)
     states = copy(a.states)
@@ -262,14 +262,14 @@ possible juxtapositions of configurations from each collection.
 
 ```jldoctest
 julia> [c"1s", c"2s"] ⊗ [c"2p-", c"2p"]
-4-element Array{Configuration{Int64,Rational{Int64}},1}:
+4-element Array{Configuration{Int64},1}:
  1s 2p⁻
  1s 2p
  2s 2p⁻
  2s 2p
 
 julia> c"1s" ⊗ [c"2s2", c"2s 2p-"]
-2-element Array{Configuration{Int64,Rational{Int64}},1}:
+2-element Array{Configuration{Int64},1}:
  1s 2s²
  1s 2s 2p⁻
 ```
@@ -290,7 +290,7 @@ given occupancy.
 
 ```jldoctest
 julia> configurations_from_nrorbital(3, 1, 2)
-3-element Array{Configuration{Int64,Rational{Int64}},1}:
+3-element Array{Configuration{Int64},1}:
  3p⁻²
  3p⁻ 3p
  3p²
@@ -303,7 +303,7 @@ function configurations_from_nrorbital(n::I, ℓ::I, occupancy::I) where {I <: I
     degeneracy_ℓm, degeneracy_ℓp = 2ℓ, 2ℓ + 2 # degeneracies of nℓ- and nℓ orbitals
     nlow_min = max(occupancy - degeneracy_ℓp, 0)
     nlow_max = min(degeneracy_ℓm, occupancy)
-    confs = Configuration{Int,Rational{Int}}[]
+    confs = Configuration{Int}[]
     for nlow = nlow_max:-1:nlow_min
         nhigh = occupancy - nlow
         conf = if nlow == 0
@@ -332,7 +332,7 @@ Only `Orbital`s with `j > ℓ` are allowed as input (i.e. the ℓ- orbitals are 
 
 ```jldoctest
 julia> configurations_from_nrorbital(o"3p", 2)
-3-element Array{Configuration{Int64,Rational{Int64}},1}:
+3-element Array{Configuration{Int64},1}:
  3p⁻²
  3p⁻ 3p
  3p²
@@ -367,7 +367,7 @@ and `occupancy` are integers, and `ℓ` is in spectroscopic notation.
 
 ```jldoctest
 julia> rcs"3p2"
-3-element Array{Configuration{Int64,Rational{Int64}},1}:
+3-element Array{Configuration{Int64},1}:
  3p⁻²
  3p⁻ 3p
  3p²

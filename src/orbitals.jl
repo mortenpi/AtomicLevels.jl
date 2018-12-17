@@ -9,33 +9,33 @@ function check_orbital_ℓj(ℓ::I, j::R) where {I<:Integer, R<:Rational{I}}
     j ∈ j₋:j₊ || throw(ArgumentError("Invalid j = $(j) ∉ $(j₋):$(j₊)"))
 end
 
-struct Orbital{I<:Integer,R<:Rational{I},N<:MQ{I}}
+struct Orbital{I<:Integer,N<:MQ{I}}
     n::N
     ℓ::I
-    j::R
+    j::Rational{I}
     function Orbital(n::I, ℓ::I, j::R=ℓ+Rational{I}(1,2)) where {I<:Integer,R<:Rational{I}}
         n ≥ 1 || throw(ArgumentError("Invalid main quantum number $(n)"))
         0 ≤ ℓ && ℓ < n || throw(ArgumentError("Angular quantum number has to be ∈ [0,$(n-1)] when n = $(n)"))
         check_orbital_ℓj(ℓ, j)
-        new{I,R,I}(n, ℓ, j)
+        new{I,I}(n, ℓ, j)
     end
     function Orbital(n::Symbol, ℓ::I, j::R=ℓ+Rational{I}(1,2)) where {I<:Integer,R<:Rational{I}}
         check_orbital_ℓj(ℓ, j)
-        new{I,R,Symbol}(n, ℓ, j)
+        new{I,Symbol}(n, ℓ, j)
     end
 end
 
-function Base.show(io::IO, orb::Orbital{I,R,N}) where {I,R,N}
+function Base.show(io::IO, orb::Orbital{I,N}) where {I,N}
     write(io, "$(orb.n)$(spectroscopic_label(orb.ℓ))")
     orb.j < orb.ℓ && write(io, "⁻")
 end
 
 flip_j(orb::Orbital) = Orbital(orb.n, orb.ℓ, orb.ℓ > 0 ? orb.ℓ - (orb.j - orb.ℓ) : orb.j)
 
-degeneracy(orb::Orbital{I,R,N}) where {I,R,N} = 2orb.j + 1 |> I
+degeneracy(orb::Orbital{I,N}) where {I,N} = 2orb.j + 1 |> I
 non_rel_degeneracy(orb::Orbital) =
     orb.ℓ == 0 ? 2 : degeneracy(orb)+degeneracy(flip_j(orb))
-parity(orb::Orbital{I,R,N}) where {I,R,N} = (-one(I))^orb.ℓ
+parity(orb::Orbital{I,N}) where {I,N} = (-one(I))^orb.ℓ
 
 nisless(an::T, bn::T) where T = an < bn
 # Our convention is that symbolic quantum numbers are always greater

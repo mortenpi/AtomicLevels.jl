@@ -53,7 +53,7 @@ using Test
     end
 
     @testset "Orbital terms" begin
-        function test_single_orbital_terms(orb::Orbital{I,R}, occ::I, ts::Vector{Term{I,R,LT}}) where {I<:Integer,R<:Rational{I},LT}
+        function test_single_orbital_terms(orb::Orbital{I}, occ::I, ts::Vector{Term{I,LT}}) where {I<:Integer,LT}
             cts = sort(terms(orb, occ))
             ts = sort(ts)
             ccts = copy(cts)
@@ -73,7 +73,7 @@ using Test
             @test length(ts) == 0
         end
 
-        function test_single_orbital_terms(orb::Orbital{I,R}, occs::Tuple{I,I}, ts::Vector{Term{I,R,LT}}) where {I<:Integer,R<:Rational{I},LT}
+        function test_single_orbital_terms(orb::Orbital{I}, occs::Tuple{I,I}, ts::Vector{Term{I,LT}}) where {I<:Integer,LT}
             map(occs) do occ
                 test_single_orbital_terms(orb, occ, ts)
             end

@@ -1,9 +1,9 @@
-function single_excitations!(excitations::Vector{Configuration{I,R}},
-                             ref_set::Configuration{I,R},
-                             orbitals::Vector{Orbital{I,R}},
+function single_excitations!(excitations::Vector{Configuration{I}},
+                             ref_set::Configuration{I},
+                             orbitals::Vector{Orbital{I}},
                              min_occupancy::Vector{I},
                              max_occupancy::Vector{I},
-                             excite_from::I) where {I,R}
+                             excite_from::I) where I
     for config ∈ excitations[end-excite_from+1:end]
         for (orb,occ,state) ∈ config
             state != :open && continue
@@ -28,14 +28,13 @@ function single_excitations!(excitations::Vector{Configuration{I,R}},
     end
 end
 
-function excited_configurations(ref_set::Configuration{I,R},
-                                orbitals::Orbital{I,R}...;
+function excited_configurations(ref_set::Configuration{I},
+                                orbitals::Orbital{I}...;
                                 min_excitations::I=zero(I),
                                 max_excitations::Union{I,Symbol}=:doubles,
                                 min_occupancy::Vector{I}=zeros(I, length(peel(ref_set))),
                                 max_occupancy::Vector{I}=[degeneracy(first(o)) for o in peel(ref_set)],
-                                keep_parity::Bool=true) where {I<:Integer, R<:Rational{I}}
-
+                                keep_parity::Bool=true) where I
     if max_excitations isa Symbol
         max_excitations = if max_excitations == :singles
             1

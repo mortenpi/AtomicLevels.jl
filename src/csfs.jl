@@ -1,25 +1,25 @@
-struct CSF{I<:Integer, R<:Rational{I}, T<:Union{Term{I,R},R}}
-    config::Configuration{I,R}
+struct CSF{I<:Integer, T<:Union{Term{I,Rational{I}},Rational{I}}}
+    config::Configuration{I}
     subshell_terms::Vector{T}
     terms::Vector{T}
 
-    function CSF(config::Configuration{I,R}, subshell_terms::Vector{Term{I,R}}, terms::Vector{Term{I,R}}) where {I,R}
+    function CSF(config::Configuration, subshell_terms::Vector{<:Term}, terms::Vector{<:Term})
         error("Non-relativistic CSFs not yet implemented")
     end
 
-    function CSF(config::Configuration{I,R}, subshell_terms::Vector{R}, terms::Vector{R}) where {I,R}
+    function CSF(config::Configuration{I}, subshell_terms::Vector{R}, terms::Vector{R}) where {I,R<:Rational{I}}
         length(subshell_terms) == length(peel(config)) ||
             throw(ArgumentError("Need to provide $(length(peel(config))) subshell terms for $(config)"))
         length(terms) == length(peel(config)) ||
             throw(ArgumentError("Need to provide $(length(peel(config))) terms for $(config)"))
-        new{I,R,R}(config, subshell_terms, terms)
+        new{I,R}(config, subshell_terms, terms)
     end
 end
 
 # We possibly want to sort on configuration as well
 Base.isless(a::CSF, b::CSF) = last(a.terms) < last(b.terms)
 
-function csfs(config::Configuration{I,R}) where {I,R}
+function csfs(config::Configuration{I}) where I
     p_config = peel(config)
     js = map(p_config) do (orb,occ,state)
         jj_terms(orb,occ)
@@ -31,7 +31,7 @@ function csfs(config::Configuration{I,R}) where {I,R}
     end |> c -> vcat(c...) |> sort
 end
 
-function Base.show(io::IO, csf::CSF{I,R,R}) where {I<:Integer,R<:Rational{I}}
+function Base.show(io::IO, csf::CSF{I,R}) where {I<:Integer,R<:Rational{I}}
     c = core(csf.config)
     cw = length(string(c))
 

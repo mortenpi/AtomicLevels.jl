@@ -88,7 +88,7 @@ bugs present in the latest release.
 
    #+RESULTS:
    #+begin_example
-   13-element Array{Orbital{Int64,Rational{Int64},#s23} where #s23<:Union{Int64, Symbol},1}:
+   13-element Array{Orbital{Int64,#s23} where #s23<:Union{Int64, Symbol},1}:
     5d⁻
     5d 
     6s 
@@ -113,7 +113,7 @@ bugs present in the latest release.
    #+END_SRC
 
    #+RESULTS:
-   : 2-element Array{Configuration{Int64,Rational{Int64}},1}:
+   : 2-element Array{Configuration{Int64},1}:
    :  5s² 5p⁻² 5p³
    :  5s² 5p⁻ 5p⁴ 
 
@@ -125,7 +125,7 @@ bugs present in the latest release.
 
    #+RESULTS:
    #+begin_example
-   41-element Array{Configuration{Int64,Rational{Int64}},1}:
+   41-element Array{Configuration{Int64},1}:
     5s² 5p⁻² 5p³       
     5s 5p⁻² 5p³ 5d⁻    
     5s 5p⁻² 5p³ 5d     
@@ -181,7 +181,7 @@ bugs present in the latest release.
 
    #+RESULTS:
    #+begin_example
-   16-element Array{Configuration{Int64,Rational{Int64}},1}:
+   16-element Array{Configuration{Int64},1}:
     5s² 5p⁻² 5p⁴    
     5s 5p⁻² 5p⁴ ks  
     5s 5p⁻² 5p⁴ kp⁻ 
@@ -211,7 +211,7 @@ bugs present in the latest release.
 
    #+RESULTS:
    #+begin_example
-   16-element Array{Pair{Int64,Configuration{Int64,Rational{Int64}}},1}:
+   16-element Array{Pair{Int64,Configuration{Int64}},1}:
     8 => 5s² 5p⁻² 5p⁴
     7 => 5s 5p⁻² 5p⁴ 
     7 => 5s 5p⁻² 5p⁴ 
@@ -239,7 +239,7 @@ bugs present in the latest release.
 
    #+RESULTS:
    #+begin_example
-   16-element Array{Pair{Int64,Configuration{Int64,Rational{Int64}}},1}:
+   16-element Array{Pair{Int64,Configuration{Int64}},1}:
     0 =>    
     1 => ks 
     1 => kp⁻
@@ -268,7 +268,7 @@ bugs present in the latest release.
     #+END_SRC
 
     #+RESULTS:
-    : 1-element Array{Term{Int64,Rational{Int64},Int64},1}:
+    : 1-element Array{Term{Int64,Int64},1}:
     :  ²S
     
     #+BEGIN_SRC julia :exports both :results verbatim
@@ -276,7 +276,7 @@ bugs present in the latest release.
     #+END_SRC
 
     #+RESULTS:
-    : 1-element Array{Term{Int64,Rational{Int64},Int64},1}:
+    : 1-element Array{Term{Int64,Int64},1}:
     :  ²Pᵒ
     
     #+BEGIN_SRC julia :exports both :results verbatim
@@ -285,7 +285,7 @@ bugs present in the latest release.
 
     #+RESULTS:
     #+begin_example
-    13-element Array{Term{Int64,Rational{Int64},Int64},1}:
+    13-element Array{Term{Int64,Int64},1}:
      ¹D
      ¹F
      ¹G
@@ -350,7 +350,7 @@ bugs present in the latest release.
 
    #+RESULTS:
    #+begin_example
-   7-element Array{AtomicLevels.CSF{Int64,Rational{Int64},Rational{Int64}},1}:
+   7-element Array{CSF{Int64,Rational{Int64}},1}:
      3s   3p²  
       1/2    0
        1/2  1/2+                        
