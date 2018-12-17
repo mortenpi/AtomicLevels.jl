@@ -1,15 +1,18 @@
-struct Configuration{I<:Integer}
-    orbitals::Vector{<:Orbital{I,<:MQ{I}}}
-    occupancy::Vector{I}
+struct Configuration{O<:AbstractOrbital}
+    orbitals::Vector{O}
+    occupancy::Vector{Int}
     states::Vector{Symbol}
     function Configuration(
-        orbitals::Vector{<:Orbital{I,<:MQ{I}}},
-        occupancy::Vector{I},
-        states::Vector{Symbol}=[:open for o in orbitals]) where {I<:Integer}
-        length(orbitals) == length(occupancy) || throw(ArgumentError("Need to specify occupation numbers for all orbitals"))
-        length(states) ≤ length(orbitals) || throw(ArgumentError("Cannot provide more states than orbitals"))
+        orbitals::Vector{O},
+        occupancy::Vector{Int},
+        states::Vector{Symbol}=[:open for o in orbitals]) where {O<:AbstractOrbital}
+        length(orbitals) == length(occupancy) ||
+            throw(ArgumentError("Need to specify occupation numbers for all orbitals"))
+        length(states) ≤ length(orbitals) ||
+            throw(ArgumentError("Cannot provide more states than orbitals"))
 
-        length(orbitals) == length(unique(orbitals)) || throw(ArgumentError("Not all orbitals are unique"))
+        length(orbitals) == length(unique(orbitals)) ||
+            throw(ArgumentError("Not all orbitals are unique"))
 
         if length(states) < length(orbitals)
             append!(states, repeat([:open], length(orbitals) - length(states)))
@@ -23,17 +26,21 @@ struct Configuration{I<:Integer}
             orb = orbitals[i]
             degen_orb = degeneracy(orb)
             if occ > degen_orb
-                orb_conj = flip_j(orb)
-                degen_orb_conj = degeneracy(orb_conj)
-                if occ == degen_orb + degen_orb_conj && orb_conj ∉ orbitals
-                    occupancy[i] = degen_orb
-                    push!(orbitals, orb_conj)
-                    push!(occupancy, degen_orb_conj)
-                    push!(states, states[i])
-                elseif orb_conj ∈ orbitals
+                if O <: Orbital
                     throw(ArgumentError("Higher occupancy than possible for $(orb) with degeneracy $(degen_orb)"))
-                else
-                    throw(ArgumentError("Can only specify higher occupancy for $(orb) if completely filling the $(orb),$(orb_conj) subshell (for total degeneracy of $(degen_orb+degen_orb_conj))"))
+                elseif O <: RelativisticOrbital
+                    orb_conj = flip_j(orb)
+                    degen_orb_conj = degeneracy(orb_conj)
+                    if occ == degen_orb + degen_orb_conj && orb_conj ∉ orbitals
+                        occupancy[i] = degen_orb
+                        push!(orbitals, orb_conj)
+                        push!(occupancy, degen_orb_conj)
+                        push!(states, states[i])
+                    elseif orb_conj ∈ orbitals
+                        throw(ArgumentError("Higher occupancy than possible for $(orb) with degeneracy $(degen_orb)"))
+                    else
+                        throw(ArgumentError("Can only specify higher occupancy for $(orb) if completely filling the $(orb),$(orb_conj) subshell (for total degeneracy of $(degen_orb+degen_orb_conj))"))
+                    end
                 end
             end
         end
@@ -45,13 +52,13 @@ struct Configuration{I<:Integer}
 
         p = sortperm(orbitals)
 
-        new{I}(orbitals[p], occupancy[p], states[p])
+        new{O}(orbitals[p], occupancy[p], states[p])
     end
 end
 
-function Configuration(orbs::Vector{<:Tuple{<:Orbital{I,<:MQ{I}},I,Symbol}}) where {I<:Integer}
-    orbitals = Vector{Orbital{I,<:MQ{I}}}()
-    occupancy = Vector{I}()
+function Configuration(orbs::Vector{Tuple{O,Int,Symbol}}) where {O<:AbstractOrbital}
+    orbitals = Vector{O}()
+    occupancy = Vector{Int}()
     states = Vector{Symbol}()
     for (orb,occ,state) in orbs
         push!(orbitals, orb)
@@ -61,20 +68,29 @@ function Configuration(orbs::Vector{<:Tuple{<:Orbital{I,<:MQ{I}},I,Symbol}}) whe
     Configuration(orbitals, occupancy, states)
 end
 
-Configuration(orbital::Orbital{I,<:MQ{I}}, occupancy::I, state::Symbol=:open) where {I<:Integer} =
+Configuration(orbital::O, occupancy::Int, state::Symbol=:open) where {O<:AbstractOrbital} =
     Configuration([orbital], [occupancy], [state])
 
-Configuration{I}() where I =
-    Configuration(Orbital{I,<:MQ{I}}[], I[], Symbol[])
+Configuration{O}() where {O<:AbstractOrbital} =
+    Configuration(O[], Int[], Symbol[])
 
-issimilar(a::Configuration{I}, b::Configuration{I}) where I =
+const RelativisticConfiguration{N} = Configuration{RelativisticOrbital{N}}
+
+issimilar(a::Configuration{<:O}, b::Configuration{<:O}) where {O<:AbstractOrbital} =
     a.orbitals == b.orbitals && a.occupancy == b.occupancy
 
-import Base: ==
-==(a::Configuration{I}, b::Configuration{I}) where I =
+Base.:(==)(a::Configuration{<:O}, b::Configuration{<:O}) where {O<:AbstractOrbital} =
     issimilar(a, b) && a.states == b.states
 
-noble_gases = Dict{String,Configuration}()
+noble_gases = Dict(Orbital => Dict{String,Configuration{<:Orbital}}(),
+                   RelativisticOrbital => Dict{String,Configuration{<:RelativisticOrbital}}())
+
+# This construct is needed since when showing configurations, they
+# will be specialized on the Orbital parameterization, which we cannot
+# index noble_gases with.
+for O in [:Orbital,:RelativisticOrbital]
+    @eval get_noble_gas(::Type{O}, k) where {O<:$O} = noble_gases[$O][k]
+end
 
 function write_orbitals(io::IO, config::Configuration)
     for (i,(orb,occ,state)) in enumerate(config)
@@ -86,7 +102,7 @@ function write_orbitals(io::IO, config::Configuration)
     end
 end
 
-function Base.show(io::IO, config::Configuration)
+function Base.show(io::IO, config::Configuration{O}) where O
     nc = length(config)
     if nc == 0
         write(io, "∅")
@@ -97,7 +113,7 @@ function Base.show(io::IO, config::Configuration)
     if length(core_config) > 0
         core_printed = false
         for gas in ["Rn", "Xe", "Kr", "Ar", "Ne", "He"]
-            gas_cfg = noble_gases[gas]
+            gas_cfg = get_noble_gas(O, gas)
             ngc = length(gas_cfg)
             if ncc ≥ ngc && issimilar(core_config[1:length(gas_cfg)], gas_cfg)
                 write(io, "[$(gas)]ᶜ")
@@ -127,27 +143,27 @@ function state_sym(state::AbstractString)
     end
 end
 
-function core_configuration(element::AbstractString, state::AbstractString)
-    element ∉ keys(noble_gases) && throw(ArgumentError("Unknown noble gas $(element)"))
+function core_configuration(::Type{O}, element::AbstractString, state::AbstractString) where {O<:AbstractOrbital}
+    element ∉ keys(noble_gases[O]) && throw(ArgumentError("Unknown noble gas $(element)"))
     state = state_sym(state == "" ? "c" : state) # By default, we'd like cores to be frozen
-    core_config = noble_gases[element]
+    core_config = noble_gases[O][element]
     Configuration(core_config.orbitals, core_config.occupancy,
                   [state for o in core_config.orbitals])
 end
 
-function parse_orbital(orb_str)
+function parse_orbital(::Type{O}, orb_str) where {O<:AbstractOrbital}
     m = match(r"^([0-9]+|.([a-z]|\[[0-9]+\])[-]{0,1})([0-9]*)([*ci]{0,1})$",orb_str)
-    orbital_from_string(m[1]),m[3]=="" ? 1 : parse(Int, m[3]),state_sym(m[4])
+    orbital_from_string(O, m[1]),m[3]=="" ? 1 : parse(Int, m[3]),state_sym(m[4])
 end
 
-function configuration_from_string(conf_str::AbstractString)
-    isempty(conf_str) && return Configuration{Int}()
+function configuration_from_string(::Type{O}, conf_str::AbstractString) where {O<:AbstractOrbital}
+    isempty(conf_str) && return Configuration{O}()
     orbs = split(conf_str, r"[\. ]")
     core_m = match(r"\[([a-zA-Z]+)\]([*ci]{0,1})", first(orbs))
     if core_m != nothing
-        core_config = core_configuration(core_m[1], core_m[2])
+        core_config = core_configuration(O, core_m[1], core_m[2])
         if length(orbs) > 1
-            peel_config = Configuration(parse_orbital.(orbs[2:end]))
+            peel_config = Configuration(parse_orbital.(Ref(O), orbs[2:end]))
             Configuration(vcat(core_config.orbitals, peel_config.orbitals),
                           vcat(core_config.occupancy, peel_config.occupancy),
                           vcat(core_config.states, peel_config.states))
@@ -155,38 +171,44 @@ function configuration_from_string(conf_str::AbstractString)
             core_config
         end
     else
-        Configuration(parse_orbital.(orbs))
+        Configuration(parse_orbital.(Ref(O), orbs))
     end
 end
 
 macro c_str(conf_str)
-    configuration_from_string(conf_str)
+    configuration_from_string(Orbital, conf_str)
 end
 
-for gas in ("He" => "1s2",
-            "Ne" => "[He] 2s2 2p6",
-            "Ar" => "[Ne] 3s2 3p6",
-            "Kr" => "[Ar] 3d10 4s2 4p6",
-            "Xe" => "[Kr] 4d10 5s2 5p6",
-            "Rn" => "[Xe] 4f14 5d10 6s2 6p6")
-    noble_gases[gas[1]] = configuration_from_string(gas[2])
+macro rc_str(conf_str)
+    configuration_from_string(RelativisticOrbital, conf_str)
 end
 
-Base.getindex(conf::Configuration{I}, i::Integer) where I =
+for O in [Orbital,RelativisticOrbital]
+    for gas in ("He" => "1s2",
+                "Ne" => "[He] 2s2 2p6",
+                "Ar" => "[Ne] 3s2 3p6",
+                "Kr" => "[Ar] 3d10 4s2 4p6",
+                "Xe" => "[Kr] 4d10 5s2 5p6",
+                "Rn" => "[Xe] 4f14 5d10 6s2 6p6")
+        noble_gases[O][gas[1]] = configuration_from_string(O,gas[2])
+    end
+end
+
+Base.getindex(conf::Configuration{O}, i::Integer) where O =
     (conf.orbitals[i], conf.occupancy[i], conf.states[i])
-Base.getindex(conf::Configuration{I}, i::Union{<:UnitRange{<:Integer},<:AbstractVector{<:Integer}}) where I =
+Base.getindex(conf::Configuration{O}, i::Union{<:UnitRange{<:Integer},<:AbstractVector{<:Integer}}) where O =
     Configuration([conf[ii] for ii in i])
 
-Base.iterate(conf::Configuration{I}, (el, i)=(length(conf)>0 ? conf[1] : nothing,1)) where I =
+Base.iterate(conf::Configuration{O}, (el, i)=(length(conf)>0 ? conf[1] : nothing,1)) where O =
     i > length(conf) ? nothing : (el, (conf[i==length(conf) ? i : i+1],i+1))
 
 Base.length(conf::Configuration) = length(conf.orbitals)
 Base.lastindex(conf::Configuration) = length(conf)
-Base.eltype(conf::Configuration{I}) where I = (Orbital{I},I,Symbol)
+Base.eltype(conf::Configuration{O}) where O = (O,Int,Symbol)
 
 num_electrons(conf::Configuration) = sum(conf.occupancy)
 
-Base.in(orb::Orbital{I}, conf::Configuration{I}) where I =
+Base.in(orb::Orbital, conf::Configuration{O}) where O =
     orb ∈ conf.orbitals
 
 Base.filter(f::Function, conf::Configuration) =
@@ -202,9 +224,10 @@ continuum(conf::Configuration) = filter((orb,occ,state) -> orb.n isa Symbol, pee
 parity(conf::Configuration) = p"odd"^mapreduce(o -> o[1].ℓ*o[2], +, conf)
 Base.count(conf::Configuration) = mapreduce(o -> o[2], +, conf)
 
-function Base.replace(conf::Configuration{I}, orbs::Pair{Orbital{I,N₁},Orbital{I,N₂}}) where {I,N₁,N₂}
+function Base.replace(conf::Configuration{O₁}, orbs::Pair{O₂,O₃}) where {O<:AbstractOrbital,O₁<:O,O₂<:O,O₃<:O}
     src,dest = orbs
-    orbitals = copy(conf.orbitals)
+    orbitals = promote_type(O₁,O₂,O₃)[]
+    append!(orbitals, conf.orbitals)
     occupancy = copy(conf.occupancy)
     states = copy(conf.states)
 
@@ -232,13 +255,12 @@ function Base.replace(conf::Configuration{I}, orbs::Pair{Orbital{I,N₁},Orbital
     Configuration(orbitals, occupancy, states)
 end
 
-import Base: +
-function +(a::Configuration{I}, b::Configuration{I}) where I
-    orbitals = copy(a.orbitals)
+function Base.:+(a::Configuration{O₁}, b::Configuration{O₂}) where {O<:AbstractOrbital,O₁<:O,O₂<:O}
+    orbitals = promote_type(O₁,O₂)[]
+    append!(orbitals, a.orbitals)
     occupancy = copy(a.occupancy)
     states = copy(a.states)
-
-    for (orb,occ,state) in b
+ for (orb,occ,state) in b
         i = findfirst(isequal(orb), orbitals)
         if isnothing(i)
             push!(orbitals, orb)
@@ -274,11 +296,12 @@ julia> c"1s" ⊗ [c"2s2", c"2s 2p-"]
  1s 2s 2p⁻
 ```
 """
-function ⊗(a::Vector{T}, b::Vector{T}) where {T <: Configuration}
+⊗(a::Vector{<:Configuration}, b::Vector{<:Configuration}) =
     [x+y for x in a for y in b]
-end
-⊗(a::Union{T,Vector{T}}, b::T) where {T <: Configuration} = a ⊗ [b]
-⊗(a::T, b::Vector{T}) where {T <: Configuration} = [a] ⊗ b
+⊗(a::Union{<:Configuration,Vector{<:Configuration}}, b::Configuration) =
+    a ⊗ [b]
+⊗(a::Configuration, b::Vector{<:Configuration}) =
+    [a] ⊗ b
 
 """
     configurations_from_nrorbital(n, ℓ, occupancy)
@@ -296,23 +319,24 @@ julia> configurations_from_nrorbital(3, 1, 2)
  3p²
 ```
 """
-function configurations_from_nrorbital(n::I, ℓ::I, occupancy::I) where {I <: Integer}
-    ℓ + 1 > n && throw(ArgumentError("ℓ=$ℓ too high for given n=$n"))
+function configurations_from_nrorbital(n::N, ℓ::Int, occupancy::Int) where {N<:MQ}
+    n isa Integer && ℓ + 1 > n && throw(ArgumentError("ℓ=$ℓ too high for given n=$n"))
     occupancy > 2*(2ℓ + 1) && throw(ArgumentError("occupancy=$occupancy too high for given ℓ=$ℓ"))
 
     degeneracy_ℓm, degeneracy_ℓp = 2ℓ, 2ℓ + 2 # degeneracies of nℓ- and nℓ orbitals
     nlow_min = max(occupancy - degeneracy_ℓp, 0)
     nlow_max = min(degeneracy_ℓm, occupancy)
-    confs = Configuration{Int}[]
+    confs = RelativisticConfiguration[]
     for nlow = nlow_max:-1:nlow_min
         nhigh = occupancy - nlow
         conf = if nlow == 0
-            Configuration([Orbital(n, ℓ, ℓ + 1//2)], [nhigh])
+            Configuration([RelativisticOrbital(n, ℓ, ℓ + 1//2)], [nhigh])
         elseif nhigh == 0
-            Configuration([Orbital(n, ℓ, ℓ - 1//2)], [nlow])
+            Configuration([RelativisticOrbital(n, ℓ, ℓ - 1//2)], [nlow])
         else
             Configuration(
-                [Orbital(n, ℓ, ℓ - 1//2), Orbital(n, ℓ, ℓ + 1//2)],
+                [RelativisticOrbital(n, ℓ, ℓ - 1//2),
+                 RelativisticOrbital(n, ℓ, ℓ + 1//2)],
                 [nlow, nhigh]
             )
         end
@@ -338,18 +362,16 @@ julia> configurations_from_nrorbital(o"3p", 2)
  3p²
 ```
 """
-function configurations_from_nrorbital(orbital::Orbital, occupation::Integer)
+function configurations_from_nrorbital(orbital::RelativisticOrbital, occupation::Integer)
     orbital.j < orbital.ℓ && throw(ArgumentError("Can't use ℓ- orbital ($orbital) as input."))
     configurations_from_nrorbital(orbital.n, orbital.ℓ, occupation)
 end
 
 function configurations_from_nrstring(orb_str::AbstractString)
-    m = match(r"^([0-9]+)([a-z]+)([0-9]+)?$", orb_str)
-    m === nothing && throw(ArgumentError("Invalid orbital string: $(orb_str)"))
-    n = parse(Int, m[1])
-    ℓi = findfirst(m[2], spectroscopic)
-    isnothing(ℓi) && throw(ArgumentError("Invalid spectroscopic label: $(m[2]) in $(orb_str)"))
-    ℓ = first(ℓi) - 1
+    m = match(r"^([0-9]+|.)([a-z]+)([0-9]+)?$", orb_str)
+    isnothing(m) && throw(ArgumentError("Invalid orbital string: $(orb_str)"))
+    n = parse_orbital_n(m)
+    ℓ = parse_orbital_ℓ(m)
     occupancy = isnothing(m[3]) ? 1 : parse(Int, m[3])
     return configurations_from_nrorbital(n, ℓ, occupancy)
 end
@@ -377,4 +399,5 @@ macro rcs_str(s)
     configurations_from_nrstring(s)
 end
 
-export Configuration, @c_str, num_electrons, core, peel, active, inactive, bound, continuum, parity, ⊗, @rcs_str
+export Configuration, @c_str, @rc_str,
+    num_electrons, core, peel, active, inactive, bound, continuum, parity, ⊗, @rcs_str

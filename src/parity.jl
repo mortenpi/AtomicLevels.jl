@@ -22,11 +22,10 @@ Base.iseven(p::Parity) = p.p
 Base.isodd(p::Parity) = !p.p
 Base.isless(a::Parity, b::Parity) = isodd(a) && iseven(b)
 
-import Base: *, ^, -
-*(a::Parity, b::Parity) = Parity(a == b)
-^(p::Parity, i::I) where {I<:Integer} =
+Base.:*(a::Parity, b::Parity) = Parity(a == b)
+Base.:^(p::Parity, i::I) where {I<:Integer} =
     p.p || iseven(i) ? Parity(true) : Parity(false)
--(p::Parity) = Parity(!p.p)
+Base.:-(p::Parity) = Parity(!p.p)
 
 Base.show(io::IO, p::Parity) =
     write(io, iseven(p) ? "even" : "odd")

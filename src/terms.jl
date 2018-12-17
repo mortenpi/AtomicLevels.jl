@@ -1,9 +1,9 @@
-struct Term{I<:Integer,LT<:Union{I,Rational{I}}}
+struct Term{LT<:Union{Int,Rational{Int}}}
     L::LT
-    S::Rational{I}
+    S::Rational{Int}
     parity::Parity
 end
-Term(L::LT, S::I, parity::Parity) where {I<:Integer,LT<:Union{I,Rational{I}}} = Term{I,LT}(L,Rational{I}(S), parity)
+Term(L::LT, S::Int, parity::Parity) where {LT<:Union{Int,Rational{Int}}} = Term{LT}(L,Rational{Int}(S), parity)
 Term(L, S, parity::Integer) = Term(L, S, convert(Parity, parity))
 
 function term_string(s::AbstractString)
@@ -74,53 +74,42 @@ couple_terms(ts::Vector{<:Vector{<:Term}}) = foldl(couple_terms, ts)
 include("xu2006.jl")
 
 # This function calculates the term symbol for a given orbital ℓʷ
-function xu_terms(ℓ::I, w::I, p::Parity) where {I<:Integer}
+function xu_terms(ℓ::Int, w::Int, p::Parity)
     ts = map(((w//2 - floor(Int, w//2)):w//2)) do S
-        S′ = 2S |> I
+        S′ = 2S |> Int
         map(L -> repeat([Term(L,S,p)], Xu.X(w,ℓ, S′, L)), 0:w*ℓ)
     end
     vcat(vcat(ts...)...)
 end
 
-function terms(orb::Orbital{I,N}, occ::I) where {I,N}
+function terms(orb::Orbital, occ::Int)
     ℓ = orb.ℓ
-    g = non_rel_degeneracy(orb)
+    g = degeneracy(orb)
     occ > g && throw(ArgumentError("Invalid occupancy $occ for $orb with degeneracy $g"))
     (occ > g/2 && occ != g) && (occ = g - occ)
 
     p = parity(orb)^occ
     if occ == 1
         [Term(ℓ,1//2,p)] # Single electron
-    elseif ℓ == 0 && occ == 2 || occ == non_rel_degeneracy(orb)
+    elseif ℓ == 0 && occ == 2 || occ == degeneracy(orb)
         [Term(0,0,p"even")] # Filled ℓ shell
     else
         xu_terms(ℓ, occ, p) # All other cases
     end
 end
 
-function terms(config::Configuration{I}) where I
-    # We have to consider spin-up and spin-down electrons as
-    # equivalent for LS term coupling to work properly.
-    orbitals = Dict{Orbital{I,<:Union{I,Symbol}},I}()
-    for (orb,occ,state) in config
-        orb_conj = flip_j(orb)
-        if orb_conj ∈ keys(orbitals)
-            orbitals[orb_conj] += occ
-        else
-            orbitals[orb] = occ
-        end
-    end
-    ts = map(collect(keys(orbitals))) do orb
-        terms(orb,orbitals[orb])
+function terms(config::Configuration{O}) where {O<:Orbital}
+    ts = map(config) do (orb,occ,state)
+        terms(orb,occ)
     end
 
     couple_terms(ts)
 end
 
-write_L(io::IO, term::Term{I,I}) where {I<:Integer} =
+write_L(io::IO, term::Term{Int}) =
     write(io, uppercase(spectroscopic_label(term.L)))
 
-write_L(io::IO, term::Term{I,R}) where {I<:Integer,R<:Rational{I}} =
+write_L(io::IO, term::Term{Rational{Int}}) =
     write(io, "[$(numerator(term.L))/$(denominator(term.L))]")
 
 function Base.show(io::IO, term::Term)

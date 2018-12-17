@@ -1,30 +1,42 @@
 @testset "Configurations" begin
     @testset "Construction" begin
         config = Configuration([o"1s", o"2s", o"2p", o"3s", o"3p"], [2,2,6,2,6], [:closed])
+        rconfig = Configuration([ro"1s", ro"2s", ro"2p", ro"3s", ro"3p"], [2,2,6,2,6], [:closed])
 
         @test config.orbitals ==
-            [o"1s", o"2s", o"2p-", o"2p", o"3s", o"3p-", o"3p"]
+            [o"1s", o"2s", o"2p", o"3s", o"3p"]
+        @test rconfig.orbitals ==
+            [ro"1s", ro"2s", ro"2p-", ro"2p", ro"3s", ro"3p-", ro"3p"]
 
-        @test config.occupancy == [2, 2, 2, 4, 2, 2, 4]
+        @test config.occupancy == [2, 2, 6, 2, 6]
+        @test rconfig.occupancy == [2, 2, 2, 4, 2, 2, 4]
 
-        @test config.states == [:closed, :open, :open, :open, :open, :open, :open]
+        @test config.states == [:closed, :open, :open, :open, :open]
+        @test rconfig.states == [:closed, :open, :open, :open, :open, :open, :open]
 
         @test c"1s2c 2s2 2p6 3s2 3p6" == config
         @test c"1s2c.2s2.2p6.3s2.3p6" == config
         @test c"[He]c 2s2 2p6 3s2 3p6" == config
+
+        @test rc"1s2c 2s2 2p6 3s2 3p6" == rconfig
+        @test rc"1s2c.2s2.2p6.3s2.3p6" == rconfig
+        @test rc"[He]c 2s2 2p6 3s2 3p6" == rconfig
 
         @test c"[Kr]c 5s2" == Configuration([o"1s", o"2s", o"2p", o"3s", o"3p", o"3d", o"4s", o"4p", o"5s"],
                                             [2,2,6,2,6,10,2,6,2],
                                             [:closed,:closed,:closed,:closed,:closed,:closed,:closed,:closed,:open])
 
         @test length(c"") == 0
+        @test length(rc"") == 0
 
-        @test c"1s ld-2 kp6" == Configuration([o"1s", o"kp-", o"kp", o"ld-"], [1, 2, 4, 2])
+        @test rc"1s ld-2 kp6" == Configuration([ro"1s", ro"kp-", ro"kp", ro"ld-"], [1, 2, 4, 2])
 
-        @test_throws ArgumentError AtomicLevels.configuration_from_string("1sc")
-        @test_throws ArgumentError AtomicLevels.configuration_from_string("1s 1s")
-        @test_throws ArgumentError AtomicLevels.configuration_from_string("[He]c 1s")
-        @test_throws ArgumentError AtomicLevels.configuration_from_string("1s3")
+        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "1sc")
+        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "1s 1s")
+        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "[He]c 1s")
+        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "1s3")
+        @test_throws ArgumentError AtomicLevels.configuration_from_string(RelativisticOrbital, "1s3")
+        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "1s2 2p-2")
     end
 
     @testset "Number of electrons" begin
@@ -40,14 +52,22 @@
         @test active(c"[Kr]c 5s2") == c"5s2"
         @test inactive(c"[Kr]c 5s2i") == c"5s2i"
         @test inactive(c"[Kr]c 5s2") == c""
-        @test bound(c"[Kr] 5s2 5p-2 5p3 ks") == c"[Kr] 5s2 5p-2 5p3"
-        @test continuum(c"[Kr] 5s2 5p-2 5p3 ks") == c"ks"
-        @test bound(c"[Kr] 5s2 5p-2 5p2 ks ld") == c"[Kr] 5s2 5p-2 5p2"
-        @test continuum(c"[Kr] 5s2 5p-2 5p2 ks ld") == c"ks ld"
+
+        @test bound(c"[Kr] 5s2 5p5 ks") == c"[Kr] 5s2 5p5"
+        @test continuum(c"[Kr] 5s2 5p5 ks") == c"ks"
+        @test bound(c"[Kr] 5s2 5p4 ks ld") == c"[Kr] 5s2 5p4"
+        @test continuum(c"[Kr] 5s2 5p4 ks ld") == c"ks ld"
+
+        @test bound(rc"[Kr] 5s2 5p-2 5p3 ks") == rc"[Kr] 5s2 5p-2 5p3"
+        @test continuum(rc"[Kr] 5s2 5p-2 5p3 ks") == rc"ks"
+        @test bound(rc"[Kr] 5s2 5p-2 5p2 ks ld") == rc"[Kr] 5s2 5p-2 5p2"
+        @test continuum(rc"[Kr] 5s2 5p-2 5p2 ks ld") == rc"ks ld"
 
         @test c"[Ne]"[1] == (o"1s",2,:closed)
         @test c"[Ne]"[1:2] == c"1s2c 2s2c"
-        @test c"[Ne]"[end-1:end] == c"2p6c"
+        @test c"[Ne]"[end-1:end] == c"2s2c 2p6c"
+
+        @test c"1s2 2p kp"[2:3] == c"2p kp"
 
         @test o"1s" ∈ c"[He]"
     end
@@ -75,7 +95,7 @@
     end
 
     @testset "Pretty printing" begin
-        Xe⁺ = c"[Kr]c 5s2 5p-2 5p3"
+        Xe⁺ = rc"[Kr]c 5s2 5p-2 5p3"
         map([c"1s" => "1s",
              c"1s2" => "1s²",
              c"1s2 2s2" => "1s² 2s²",
@@ -88,10 +108,11 @@
              Xe⁺ => "[Kr]ᶜ 5s² 5p⁻² 5p³",
              core(Xe⁺) => "[Kr]ᶜ",
              peel(Xe⁺) => "5s² 5p⁻² 5p³",
-             c"[Kr] 5s2c 5p6" => "[Kr]ᶜ 5s²ᶜ 5p⁻² 5p⁴",
-             c"[Ne]"[end-1:end] => "2p⁻²ᶜ 2p⁴ᶜ",
+             rc"[Kr] 5s2c 5p6" => "[Kr]ᶜ 5s²ᶜ 5p⁻² 5p⁴",
+             c"[Ne]"[end:end] => "2p⁶ᶜ",
+             rc"[Ne]"[end-1:end] => "2p⁻²ᶜ 2p⁴ᶜ",
              c"5s2" => "5s²",
-             c"[Kr]*" => "1s² 2s² 2p⁻² 2p⁴ 3s² 3p⁻² 3p⁴ 3d⁻⁴ 3d⁶ 4s² 4p⁻² 4p⁴",
+             rc"[Kr]*" => "1s² 2s² 2p⁻² 2p⁴ 3s² 3p⁻² 3p⁴ 3d⁻⁴ 3d⁶ 4s² 4p⁻² 4p⁴",
              c"[Kr]c" =>"[Kr]ᶜ",
              c"1s2 kp" => "1s² kp",
              c"" => "∅"]) do (c,s)
@@ -121,41 +142,45 @@
         @test c"1s" ⊗ c"" == [c"1s"]
         @test c"" ⊗ c"1s" == [c"1s"]
         @test c"1s" ⊗ c"2s" == [c"1s 2s"]
-        @test c"1s" ⊗ [c"2s", c"2p-", c"2p"] == [c"1s 2s", c"1s 2p-", c"1s 2p"]
-        @test [c"1s", c"2s"] ⊗ c"2p-" == [c"1s 2p-", c"2s 2p-"]
-        @test [c"1s", c"2s"] ⊗ [c"2p-", c"2p"] == [c"1s 2p-", c"1s 2p", c"2s 2p-", c"2s 2p"]
-        @test [c"1s 2s"] ⊗ [c"2p-2", c"2p4"] == [c"1s 2s 2p-2", c"1s 2s 2p4"]
+        @test rc"1s" ⊗ [rc"2s", rc"2p-", rc"2p"] == [rc"1s 2s", rc"1s 2p-", rc"1s 2p"]
+        @test [rc"1s", rc"2s"] ⊗ rc"2p-" == [rc"1s 2p-", rc"2s 2p-"]
+        @test [rc"1s", rc"2s"] ⊗ [rc"2p-", rc"2p"] == [rc"1s 2p-", rc"1s 2p", rc"2s 2p-", rc"2s 2p"]
+        @test [rc"1s 2s"] ⊗ [rc"2p-2", rc"2p4"] == [rc"1s 2s 2p-2", rc"1s 2s 2p4"]
+        @test [rc"1s 2s"] ⊗ [rc"kp-2", rc"lp4"] == [rc"1s 2s kp-2", rc"1s 2s lp4"]
     end
 
     @testset "Non-relativistic orbitals" begin
         import AtomicLevels: configurations_from_nrorbital
-        @test configurations_from_nrorbital(1, 0, 1) == [c"1s"]
-        @test configurations_from_nrorbital(1, 0, 2) == [c"1s2"]
-        @test configurations_from_nrorbital(2, 0, 2) == [c"2s2"]
+        @test configurations_from_nrorbital(1, 0, 1) == [rc"1s"]
+        @test configurations_from_nrorbital(1, 0, 2) == [rc"1s2"]
+        @test configurations_from_nrorbital(2, 0, 2) == [rc"2s2"]
 
-        @test configurations_from_nrorbital(2, 1, 1) == [c"2p-", c"2p"]
-        @test configurations_from_nrorbital(2, 1, 2) == [c"2p-2", c"2p- 2p", c"2p2"]
-        @test configurations_from_nrorbital(2, 1, 3) == [c"2p-2 2p1", c"2p- 2p2", c"2p3"]
-        @test configurations_from_nrorbital(2, 1, 4) == [c"2p-2 2p2", c"2p- 2p3", c"2p4"]
-        @test configurations_from_nrorbital(2, 1, 5) == [c"2p-2 2p3", c"2p- 2p4"]
-        @test configurations_from_nrorbital(2, 1, 6) == [c"2p-2 2p4"]
+        @test configurations_from_nrorbital(2, 1, 1) == [rc"2p-", rc"2p"]
+        @test configurations_from_nrorbital(2, 1, 2) == [rc"2p-2", rc"2p- 2p", rc"2p2"]
+        @test configurations_from_nrorbital(2, 1, 3) == [rc"2p-2 2p1", rc"2p- 2p2", rc"2p3"]
+        @test configurations_from_nrorbital(2, 1, 4) == [rc"2p-2 2p2", rc"2p- 2p3", rc"2p4"]
+        @test configurations_from_nrorbital(2, 1, 5) == [rc"2p-2 2p3", rc"2p- 2p4"]
+        @test configurations_from_nrorbital(2, 1, 6) == [rc"2p-2 2p4"]
 
-        @test configurations_from_nrorbital(4, 2, 10) == [c"4d-4 4d6"]
-        @test configurations_from_nrorbital(4, 2, 5) == [c"4d-4 4d1", c"4d-3 4d2", c"4d-2 4d3", c"4d-1 4d4", c"4d5"]
+        @test configurations_from_nrorbital(4, 2, 10) == [rc"4d-4 4d6"]
+        @test configurations_from_nrorbital(4, 2, 5) == [rc"4d-4 4d1", rc"4d-3 4d2", rc"4d-2 4d3", rc"4d-1 4d4", rc"4d5"]
+
+        @test configurations_from_nrorbital(:k, 2, 5) == [rc"kd-4 kd1", rc"kd-3 kd2", rc"kd-2 kd3", rc"kd-1 kd4", rc"kd5"]
 
         @test_throws ArgumentError configurations_from_nrorbital(1, 2, 1)
         @test_throws ArgumentError configurations_from_nrorbital(1, 0, 3)
 
-        @test configurations_from_nrorbital(o"1s", 2) == [c"1s2"]
-        @test configurations_from_nrorbital(o"2p", 2) == [c"2p-2", c"2p- 2p", c"2p2"]
-        @test_throws ArgumentError configurations_from_nrorbital(o"2p-", 2)
-        @test_throws ArgumentError configurations_from_nrorbital(o"3d", 20)
+        @test configurations_from_nrorbital(ro"1s", 2) == [rc"1s2"]
+        @test configurations_from_nrorbital(ro"2p", 2) == [rc"2p-2", rc"2p- 2p", rc"2p2"]
+        @test_throws ArgumentError configurations_from_nrorbital(ro"2p-", 2)
+        @test_throws ArgumentError configurations_from_nrorbital(ro"3d", 20)
 
-        @test rcs"1s" == [c"1s"]
-        @test rcs"2s2" == [c"2s2"]
-        @test rcs"2p4" == [c"2p-2 2p2", c"2p- 2p3", c"2p4"]
-        @test rcs"4d5" == [c"4d-4 4d1", c"4d-3 4d2", c"4d-2 4d3", c"4d-1 4d4", c"4d5"]
+        @test rcs"1s" == [rc"1s"]
+        @test rcs"2s2" == [rc"2s2"]
+        @test rcs"2p4" == [rc"2p-2 2p2", rc"2p- 2p3", rc"2p4"]
+        @test rcs"4d5" == [rc"4d-4 4d1", rc"4d-3 4d2", rc"4d-2 4d3", rc"4d-1 4d4", rc"4d5"]
 
-        @test c"1s2" ⊗ rcs"2p1" == [c"1s2 2p-", c"1s2 2p"]
+        @test rc"1s2" ⊗ rcs"2p" == [rc"1s2 2p-", rc"1s2 2p"]
+        @test rc"1s2" ⊗ rcs"kp" == [rc"1s2 kp-", rc"1s2 kp"]
     end
 end

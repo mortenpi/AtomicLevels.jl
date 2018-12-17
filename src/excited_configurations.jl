@@ -1,9 +1,9 @@
-function single_excitations!(excitations::Vector{Configuration{I}},
-                             ref_set::Configuration{I},
-                             orbitals::Vector{Orbital{I}},
-                             min_occupancy::Vector{I},
-                             max_occupancy::Vector{I},
-                             excite_from::I) where I
+function single_excitations!(excitations::Vector{<:Configuration},
+                             ref_set::Configuration,
+                             orbitals::Vector{O},
+                             min_occupancy::Vector{Int},
+                             max_occupancy::Vector{Int},
+                             excite_from::Int) where {O<:AbstractOrbital}
     for config ∈ excitations[end-excite_from+1:end]
         for (orb,occ,state) ∈ config
             state != :open && continue
@@ -28,13 +28,14 @@ function single_excitations!(excitations::Vector{Configuration{I}},
     end
 end
 
-function excited_configurations(ref_set::Configuration{I},
-                                orbitals::Orbital{I}...;
-                                min_excitations::I=zero(I),
-                                max_excitations::Union{I,Symbol}=:doubles,
-                                min_occupancy::Vector{I}=zeros(I, length(peel(ref_set))),
-                                max_occupancy::Vector{I}=[degeneracy(first(o)) for o in peel(ref_set)],
-                                keep_parity::Bool=true) where I
+function excited_configurations(ref_set::Configuration{O₁},
+                                orbitals::O₂...;
+                                min_excitations::Int=zero(Int),
+                                max_excitations::Union{Int,Symbol}=:doubles,
+                                min_occupancy::Vector{Int}=zeros(Int, length(peel(ref_set))),
+                                max_occupancy::Vector{Int}=[degeneracy(first(o)) for o in peel(ref_set)],
+                                keep_parity::Bool=true) where {O<:AbstractOrbital,
+                                                               O₁<:O,O₂<:O}
     if max_excitations isa Symbol
         max_excitations = if max_excitations == :singles
             1
@@ -56,7 +57,7 @@ function excited_configurations(ref_set::Configuration{I},
     # well.
     orbitals = sort(unique(vcat(ref_set_peel.orbitals, orbitals...)))
 
-    excitations = [ref_set_peel]
+    excitations = Configuration[ref_set_peel]
     excite_from = 1
     for i in 1:max_excitations
         single_excitations!(excitations, ref_set_peel, orbitals,

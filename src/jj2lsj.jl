@@ -17,9 +17,6 @@ ClebschGordanℓs(j₁::I, m₁::I, j₂::R, m₂::R, J::R, M::R) where {I<:Inte
 Base.convert(::Type{T}, cg::ClebschGordan) where {T<:Real} =
     clebschgordan(cg.j₁,cg.m₁,cg.j₂,cg.m₂,cg.J,cg.M)
 
-rs(r::Number) = "$(r)"
-rs(r::Rational) = "$(numerator(r))/$(denominator(r))"
-
 Base.show(io::IO, cg::ClebschGordan) =
     write(io, "⟨$(rs(cg.j₁)),$(rs(cg.j₂));$(rs(cg.m₁)),$(rs(cg.m₂))|$(rs(cg.J)),$(rs(cg.M))⟩")
 
@@ -53,7 +50,7 @@ We know [Eq. (3.8.58)] that
 ⟨ℓs;±ℓ,±1/2|ℓs;ℓ±1/2,ℓ±1/2⟩ = 1.
 
 =#
-function rotate!(block::M, orbs::Orbital...) where {T,M<:AbstractMatrix{T}}
+function rotate!(block::M, orbs::RelativisticOrbital...) where {T,M<:AbstractMatrix{T}}
     size(block,1) == size(block,2) == sum(degeneracy.(orbs))-2 ||
         throw(ArgumentError("Invalid block size for $(orbs...)"))
     ℓ = first(orbs).ℓ
@@ -96,7 +93,7 @@ E.g. the p-block will have the following structure:
 ```
 
 """
-function jj2lsj(::Type{T}, orbs::Orbital...) where T
+function jj2lsj(::Type{T}, orbs::RelativisticOrbital...) where T
     nℓs = map(o -> (o.n,o.ℓ), sort([orbs...]))
     blocks = map(unique(nℓs)) do (n,ℓ)
         i = findall(isequal((n,ℓ)), nℓs)
@@ -128,6 +125,6 @@ function jj2lsj(::Type{T}, orbs::Orbital...) where T
     end
     R
 end
-jj2lsj(orbs::Orbital...) = jj2lsj(Float64, orbs...)
+jj2lsj(orbs::RelativisticOrbital...) = jj2lsj(Float64, orbs...)
 
 export jj2lsj, ClebschGordan, ClebschGordanℓs
