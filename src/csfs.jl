@@ -35,6 +35,24 @@ end
 
 function Base.show(io::IO, csf::CSF{<:RelativisticOrbital,Rational{Int}})
     c = core(csf.config)
+    p = peel(csf.config)
+    nc = length(c)
+    nc > 0 && show(io, csf.config) && write(io, " ")
+
+    for (i,(orb,occ,state)) in enumerate(p)
+        show(io, orb)
+        occ > 1 && write(io, to_superscript(occ))
+        st = csf.subshell_terms[i]
+        t = csf.terms[i]
+        write(io, "($(rs(st))|$(rs(t)))")
+        i != lastindex(p) && write(io, " ")
+    end
+    print(io, iseven(parity(csf.config)) ? "+" : "-")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", csf::CSF{<:RelativisticOrbital,Rational{Int}})
+    c = core(csf.config)
+    nc = length(c)
     cw = length(string(c))
 
     w = 0
@@ -50,13 +68,13 @@ function Base.show(io::IO, csf::CSF{<:RelativisticOrbital,Rational{Int}})
     ifmt = FormatExpr("{1:>$(w+1)d}")
     rfmt = FormatExpr("{1:>$(w-1)d}/2")
 
-    printfmt(io, cfmt, c)
+    nc > 0 && printfmt(io, cfmt, c)
     for (orb,occ,state) in p
         printfmt(io, ofmt, join([string(orb), occ > 1 ? to_superscript(occ) : ""], ""))
     end
     println(io)
 
-    printfmt(io, cfmt, "")
+    nc > 0 && printfmt(io, cfmt, "")
     for j in csf.subshell_terms
         if denominator(j) == 1
             printfmt(io, ifmt, numerator(j))
@@ -66,7 +84,7 @@ function Base.show(io::IO, csf::CSF{<:RelativisticOrbital,Rational{Int}})
     end
     println(io)
 
-    printfmt(io, cfmt, "")
+    nc > 0 && printfmt(io, cfmt, "")
     print(io, " ")
     for j in csf.terms
         if denominator(j) == 1

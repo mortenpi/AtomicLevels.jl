@@ -4,4 +4,4 @@ spectroscopic_label(ℓ) =
 
 # Nicer string representation for rationals
 rs(r::Number) = "$(r)"
-rs(r::Rational) = "$(numerator(r))/$(denominator(r))"
+rs(r::Rational) = denominator(r) == 1 ? "$(numerator(r))" : "$(numerator(r))/$(denominator(r))"
