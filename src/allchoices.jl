@@ -6,6 +6,7 @@ function allchoices(choices::Vector{V}) where {T,V<:AbstractVector{T}}
     allchoices(choices, length.(choices))
 end
 Base.length(ac::allchoices) = prod(ac.dims)
+Base.eltype(ac::allchoices{T}) where T = Vector{T}
 
 function Base.iterate(ac::allchoices{T,V}, (el,i)=(first.(ac.choices),ones(Int,length(ac.dims)))) where {T,V}
     i == 0 && return nothing
