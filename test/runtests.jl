@@ -2,6 +2,7 @@ using AtomicLevels
 using Test
 
 include("parity.jl")
+include("halfinteger.jl")
 include("orbitals.jl")
 include("configurations.jl")
 include("excited_configurations.jl")
