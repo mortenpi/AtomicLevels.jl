@@ -8,6 +8,7 @@ using WignerSymbols
 
 include("common.jl")
 include("parity.jl")
+include("halfinteger.jl")
 include("orbitals.jl")
 include("configurations.jl")
 include("excited_configurations.jl")
