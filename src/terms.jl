@@ -1,10 +1,10 @@
-struct Term{LT<:Union{Int,Rational{Int}}}
-    L::LT
-    S::Rational{Int}
+struct Term
+    L::HalfInteger
+    S::HalfInteger
     parity::Parity
 end
-Term(L::LT, S::Int, parity::Parity) where {LT<:Union{Int,Rational{Int}}} = Term{LT}(L,Rational{Int}(S), parity)
-Term(L, S, parity::Integer) = Term(L, S, convert(Parity, parity))
+Term(L::Real, S::Real, parity::Integer) =
+    Term(convert(HalfInteger, L), convert(HalfInteger, S), convert(Parity, parity))
 
 function term_string(s::AbstractString)
     m = match(r"([0-9]+)([A-Z]|\[[0-9/]+\])([oe ]{0,1})", s)
@@ -32,7 +32,7 @@ macro T_str(s::AbstractString)
     term_string(s)
 end
 
-multiplicity(t::Term) = round(Int, 2t.S + 1)
+multiplicity(t::Term) = convert(Int, 2t.S + 1)
 weight(t::Term) = (2t.L + 1) * multiplicity(t)
 
 import Base.==
@@ -106,11 +106,13 @@ function terms(config::Configuration{O}) where {O<:Orbital}
     couple_terms(ts)
 end
 
-write_L(io::IO, term::Term{Int}) =
-    write(io, uppercase(spectroscopic_label(term.L)))
-
-write_L(io::IO, term::Term{Rational{Int}}) =
-    write(io, "[$(numerator(term.L))/$(denominator(term.L))]")
+function write_L(io::IO, term::Term)
+    if isinteger(term.L)
+        write(io, uppercase(spectroscopic_label(convert(Int, term.L))))
+    else
+        write(io, "[$(numerator(term.L))/$(denominator(term.L))]")
+    end
+end
 
 function Base.show(io::IO, term::Term)
     write(io, to_superscript(multiplicity(term)))

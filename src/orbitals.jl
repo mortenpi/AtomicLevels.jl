@@ -40,8 +40,9 @@ end
 
 # * Relativistic orbital
 
-function check_orbital_ℓj(ℓ::Int, j::R) where {R<:Rational{Int}}
-    s = R(1,2)
+function check_orbital_ℓj(ℓ::Int, j::Real)
+    j = HalfInteger(j)
+    s = hi"1/2"
     j₋ = abs(ℓ - s)
     j₊ = ℓ+s
     j ∈ j₋:j₊ || throw(ArgumentError("Invalid j = $(j) ∉ $(j₋):$(j₊)"))
@@ -50,14 +51,14 @@ end
 struct RelativisticOrbital{N<:MQ} <: AbstractOrbital
     n::N
     ℓ::Int
-    j::Rational{Int}
-    function RelativisticOrbital(n::Int, ℓ::Int, j::R=ℓ+Rational{Int}(1,2)) where {R<:Rational{Int}}
+    j::HalfInteger
+    function RelativisticOrbital(n::Int, ℓ::Int, j::Real=ℓ+hi"1/2")
         n ≥ 1 || throw(ArgumentError("Invalid main quantum number $(n)"))
         0 ≤ ℓ && ℓ < n || throw(ArgumentError("Angular quantum number has to be ∈ [0,$(n-1)] when n = $(n)"))
         check_orbital_ℓj(ℓ, j)
         new{Int}(n, ℓ, j)
     end
-    function RelativisticOrbital(n::Symbol, ℓ::Int, j::R=ℓ+Rational{Int}(1,2)) where {R<:Rational{Int}}
+    function RelativisticOrbital(n::Symbol, ℓ::Int, j::Real=ℓ+hi"1/2")
         check_orbital_ℓj(ℓ, j)
         new{Symbol}(n, ℓ, j)
     end
@@ -71,7 +72,7 @@ end
 flip_j(orb::RelativisticOrbital) =
     RelativisticOrbital(orb.n, orb.ℓ, orb.ℓ > 0 ? orb.ℓ - (orb.j - orb.ℓ) : orb.j)
 
-degeneracy(orb::RelativisticOrbital{N}) where N = 2orb.j + 1 |> Int
+degeneracy(orb::RelativisticOrbital{N}) where N = convert(Int, 2*orb.j) + 1
 
 function Base.isless(a::RelativisticOrbital, b::RelativisticOrbital)
     nisless(a.n, b.n) && return true
