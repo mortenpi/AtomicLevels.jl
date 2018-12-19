@@ -57,7 +57,7 @@ function rotate!(block::M, orbs::RelativisticOrbital...) where {T,M<:AbstractMat
     # We sort by mⱼ and remove the first and last elements since they
     # are pure and trivially unity.
     ℓms = vcat([[(ℓ,m,s) for m ∈ -ℓ:ℓ] for s = -1//2:1//2]...)[2:end-1]
-    jmⱼ = sort(vcat([[(j,mⱼ) for mⱼ ∈ -j:j] for j ∈ [o.j for o in orbs]]...), by=last)[2:end-1]
+    jmⱼ = sort(vcat([[(j,mⱼ) for mⱼ ∈ -j:j] for j ∈ [convert(Rational, o.j) for o in orbs]]...), by=last)[2:end-1]
     for (a,(ℓ,m,s)) in enumerate(ℓms)
         for (b,(j,mⱼ)) in enumerate(jmⱼ)
             block[a,b] = ClebschGordanℓs(ℓ,m,1//2,s,j,mⱼ)
@@ -99,11 +99,11 @@ function jj2lsj(::Type{T}, orbs::RelativisticOrbital...) where T
         i = findall(isequal((n,ℓ)), nℓs)
         subspace = orbs[i]
         mⱼ = map(subspace) do orb
-            j = orb.j
+            j = convert(Rational, orb.j)
             -j:j
         end
 
-        jₘₐₓ = maximum([o.j for o in subspace])
+        jₘₐₓ = maximum([convert(Rational, o.j) for o in subspace])
         pure = [Matrix{T}(undef,1,1),Matrix{T}(undef,1,1)]
         pure[1][1]=ClebschGordanℓs(ℓ,-ℓ,1//2,-1//2,jₘₐₓ,-jₘₐₓ)
         pure[2][1]=ClebschGordanℓs(ℓ,ℓ,1//2,1//2,jₘₐₓ,jₘₐₓ)

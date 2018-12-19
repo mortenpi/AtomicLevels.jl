@@ -1,4 +1,4 @@
-struct CSF{O<:AbstractOrbital, T<:Union{Term{Rational{Int}},Rational{Int}}}
+struct CSF{O<:AbstractOrbital, T<:Union{Term,HalfInteger}}
     config::Configuration{<:O}
     subshell_terms::Vector{T}
     terms::Vector{T}
@@ -9,12 +9,13 @@ struct CSF{O<:AbstractOrbital, T<:Union{Term{Rational{Int}},Rational{Int}}}
     end
 
     function CSF(config::Configuration{<:RelativisticOrbital},
-                 subshell_terms::Vector{R}, terms::Vector{R}) where {R<:Rational{Int}}
+                 subshell_terms::Vector{R}, terms::Vector{R}) where {R<:Real}
         length(subshell_terms) == length(peel(config)) ||
             throw(ArgumentError("Need to provide $(length(peel(config))) subshell terms for $(config)"))
         length(terms) == length(peel(config)) ||
             throw(ArgumentError("Need to provide $(length(peel(config))) terms for $(config)"))
-        new{RelativisticOrbital,R}(config, subshell_terms, terms)
+        new{RelativisticOrbital,HalfInteger}(config, convert.(HalfInteger, subshell_terms),
+            convert.(HalfInteger, terms))
     end
 end
 
@@ -33,7 +34,7 @@ function csfs(config::Configuration{<:RelativisticOrbital})
     end |> c -> vcat(c...) |> sort
 end
 
-function Base.show(io::IO, csf::CSF{<:RelativisticOrbital,Rational{Int}})
+function Base.show(io::IO, csf::CSF{<:RelativisticOrbital,HalfInteger})
     c = core(csf.config)
     p = peel(csf.config)
     nc = length(c)
@@ -50,7 +51,7 @@ function Base.show(io::IO, csf::CSF{<:RelativisticOrbital,Rational{Int}})
     print(io, iseven(parity(csf.config)) ? "+" : "-")
 end
 
-function Base.show(io::IO, ::MIME"text/plain", csf::CSF{<:RelativisticOrbital,Rational{Int}})
+function Base.show(io::IO, ::MIME"text/plain", csf::CSF{<:RelativisticOrbital,HalfInteger})
     c = core(csf.config)
     nc = length(c)
     cw = length(string(c))

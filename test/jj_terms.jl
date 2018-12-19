@@ -16,10 +16,10 @@
         ]) do (orbs,wsj)
             foreach(orbs) do orb
                 foreach(wsj) do (ws,j)
-                    j isa Number && (j = j:j)
+                    js = map(HalfInteger, isa(j, Number) ? [j] : j)
                     foreach(ws) do w
                         # Should actually test without unique
-                        @test unique(jj_terms(orb,w)) == unique(j)
+                        @test unique(jj_terms(orb,w)) == unique(js)
                     end
                 end
             end
@@ -27,9 +27,28 @@
     end
 
     @testset "Coupling of jj terms" begin
+        @test couple_terms(1, 2) isa Vector{Int}
+        @test couple_terms(1//2, 1//2) isa Vector{HalfInteger}
+        @test couple_terms(1.0, 1.5) isa Vector{HalfInteger}
+
+        @test couple_terms(hi"1/2", hi"0") == [1//2]
+        @test couple_terms(1//2, hi"0") == [1//2]
+        @test couple_terms(hi"1/2", 0) == [1//2]
+
         @test couple_terms(0, 1) == 1:1
         @test couple_terms(1//2,1//2) == 0:1
         @test couple_terms(1, 1) == 0:2
         @test couple_terms(1//1, 3//2) == 1//2:5//2
+
+        @test couple_terms(0, 1.0) == 1:1
+        @test couple_terms(1.0, 1.5) == 1//2:5//2
+
+        @test couple_terms([1, 2], 3) isa Vector{Vector{Int}}
+        @test couple_terms([1, 2], hi"3") isa Vector{Vector{HalfInteger}}
+        @test couple_terms([1, 2.5], 3) isa Vector{Vector{HalfInteger}}
+
+        @test couple_terms([0, 0], 0) == [[0,0,0]]
+        @test couple_terms([0, 0], 1) == [[1,1,1]]
+        @test couple_terms([1//2, 1//2], 0) == [[0,1//2,0],[0,1//2,1]]
     end
 end

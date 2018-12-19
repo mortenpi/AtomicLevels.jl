@@ -7,6 +7,7 @@ using Random
         @test o"2[1]" == Orbital(2,1)
 
         @test ro"1s" == RelativisticOrbital(1,0)
+        @test ro"2p-" == RelativisticOrbital(2,1,hi"1/2")
         @test ro"2p-" == RelativisticOrbital(2,1,1//2)
         @test ro"2p" == RelativisticOrbital(2,1,3//2)
         @test ro"2[1]" == RelativisticOrbital(2,1,3//2)
