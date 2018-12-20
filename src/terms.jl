@@ -77,7 +77,7 @@ include("xu2006.jl")
 function xu_terms(ℓ::Int, w::Int, p::Parity)
     ts = map(((w//2 - floor(Int, w//2)):w//2)) do S
         S′ = 2S |> Int
-        map(L -> repeat([Term(L,S,p)], Xu.X(w,ℓ, S′, L)), 0:w*ℓ)
+        map(L -> repeat([Term(L,S,p)], Xu.X(w, ℓ, S′, L)), 0:w*ℓ)
     end
     vcat(vcat(ts...)...)
 end
@@ -91,7 +91,7 @@ function terms(orb::Orbital, occ::Int)
     p = parity(orb)^occ
     if occ == 1
         [Term(ℓ,1//2,p)] # Single electron
-    elseif ℓ == 0 && occ == 2 || occ == degeneracy(orb)
+    elseif ℓ == 0 && occ == 2 || occ == degeneracy(orb) || occ == 0
         [Term(0,0,p"even")] # Filled ℓ shell
     else
         xu_terms(ℓ, occ, p) # All other cases
@@ -104,6 +104,33 @@ function terms(config::Configuration{O}) where {O<:Orbital}
     end
 
     couple_terms(ts)
+end
+
+"""
+    count_terms(orb, occ, term)
+
+Count how many times `term` occurs among the valid terms of
+`orb`^`occ`. Example:
+
+```
+count_terms(o"1s", 2, T"1S") # 1
+```
+"""
+function count_terms(orb::Orbital, occ::Int, term::Term)
+    ℓ = orb.ℓ
+    g = degeneracy(orb)
+    occ > g && throw(ArgumentError("Invalid occupancy $occ for $orb with degeneracy $g"))
+    (occ > g/2 && occ != g) && (occ = g - occ)
+
+    p = parity(orb)^occ
+    if occ == 1
+        term == Term(ℓ,1//2,p) ? 1 : 0
+    elseif ℓ == 0 && occ == 2 || occ == degeneracy(orb) || occ == 0
+        term == Term(0,0,p"even") ? 1 : 0
+    else
+        S′ = convert(Int, 2term.S)
+        Xu.X(occ, orb.ℓ, S′, convert(Int, term.L))
+    end
 end
 
 function write_L(io::IO, term::Term)
@@ -120,4 +147,4 @@ function Base.show(io::IO, term::Term)
     write(io, to_superscript(term.parity))
 end
 
-export Term, @T_str, multiplicity, weight, couple_terms, terms
+export Term, @T_str, multiplicity, weight, couple_terms, terms, count_terms

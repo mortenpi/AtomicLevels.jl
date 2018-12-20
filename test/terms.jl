@@ -157,6 +157,14 @@ using Test
         @test_throws ArgumentError terms(o"2p", 7)
     end
 
+    @testset "Count terms" begin
+        @test count_terms(o"1s", 1, T"2S") == 1
+        @test count_terms(o"1s", 2, T"1S") == 1
+        @test count_terms(o"3d", 1, T"2D") == 1
+        @test count_terms(o"3d", 3, T"2D") == 2
+        @test count_terms(o"3d", 5, T"2D") == 3
+    end
+
     @testset "Coupling" begin
         # Coupling two 2S terms should yields singlets and triplets of S,P,D
         @test couple_terms(Term(1,1//2,1), Term(1,1//2,1)) ==
