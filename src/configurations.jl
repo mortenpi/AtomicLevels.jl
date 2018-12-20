@@ -284,14 +284,14 @@ possible juxtapositions of configurations from each collection.
 
 ```jldoctest
 julia> [c"1s", c"2s"] ⊗ [c"2p-", c"2p"]
-4-element Array{Configuration{Int64},1}:
+4-element Array{Configuration{RelativisticOrbital},1}:
  1s 2p⁻
  1s 2p
  2s 2p⁻
  2s 2p
 
 julia> c"1s" ⊗ [c"2s2", c"2s 2p-"]
-2-element Array{Configuration{Int64},1}:
+2-element Array{Configuration{RelativisticOrbital},1}:
  1s 2s²
  1s 2s 2p⁻
 ```
@@ -304,22 +304,22 @@ julia> c"1s" ⊗ [c"2s2", c"2s 2p-"]
     [a] ⊗ b
 
 """
-    configurations_from_nrorbital(n, ℓ, occupancy)
+    rconfigurations_from_orbital(n, ℓ, occupancy)
 
-Generate all `Configuration`s corresponding to the non-relativistic `nℓ` orbital with the
-given occupancy.
+Generate all `Configuration`s with relativistic orbitals corresponding to the
+non-relativistic orbital with `n` and `ℓ` quantum numbers, with given occupancy.
 
 # Examples
 
 ```jldoctest
-julia> configurations_from_nrorbital(3, 1, 2)
-3-element Array{Configuration{Int64},1}:
+julia> rconfigurations_from_orbital(3, 1, 2)
+3-element Array{Configuration{RelativisticOrbital},1}:
  3p⁻²
  3p⁻ 3p
  3p²
 ```
 """
-function configurations_from_nrorbital(n::N, ℓ::Int, occupancy::Int) where {N<:MQ}
+function rconfigurations_from_orbital(n::N, ℓ::Int, occupancy::Int) where {N<:MQ}
     n isa Integer && ℓ + 1 > n && throw(ArgumentError("ℓ=$ℓ too high for given n=$n"))
     occupancy > 2*(2ℓ + 1) && throw(ArgumentError("occupancy=$occupancy too high for given ℓ=$ℓ"))
 
@@ -346,38 +346,36 @@ function configurations_from_nrorbital(n::N, ℓ::Int, occupancy::Int) where {N<
 end
 
 """
-    configurations_from_nrorbital(orbital::Orbital, occupancy)
+    rconfigurations_from_orbital(orbital::Orbital, occupancy)
 
-Generate all `Configuration`s corresponding to the non-relativistic version of the `orbital`.
-
-Only `Orbital`s with `j > ℓ` are allowed as input (i.e. the ℓ- orbitals are disallowed).
+Generate all `Configuration`s with relativistic orbitals corresponding to the
+non-relativistic version of the `orbital` with a given occupancy.
 
 # Examples
 
 ```jldoctest
-julia> configurations_from_nrorbital(o"3p", 2)
-3-element Array{Configuration{Int64},1}:
+julia> rconfigurations_from_orbital(o"3p", 2)
+3-element Array{Configuration{RelativisticOrbital},1}:
  3p⁻²
  3p⁻ 3p
  3p²
 ```
 """
-function configurations_from_nrorbital(orbital::RelativisticOrbital, occupation::Integer)
-    orbital.j < orbital.ℓ && throw(ArgumentError("Can't use ℓ- orbital ($orbital) as input."))
-    configurations_from_nrorbital(orbital.n, orbital.ℓ, occupation)
+function rconfigurations_from_orbital(orbital::Orbital, occupation::Integer)
+    rconfigurations_from_orbital(orbital.n, orbital.ℓ, occupation)
 end
 
-function configurations_from_nrstring(orb_str::AbstractString)
+function rconfigurations_from_nrstring(orb_str::AbstractString)
     m = match(r"^([0-9]+|.)([a-z]+)([0-9]+)?$", orb_str)
     isnothing(m) && throw(ArgumentError("Invalid orbital string: $(orb_str)"))
     n = parse_orbital_n(m)
     ℓ = parse_orbital_ℓ(m)
     occupancy = isnothing(m[3]) ? 1 : parse(Int, m[3])
-    return configurations_from_nrorbital(n, ℓ, occupancy)
+    return rconfigurations_from_orbital(n, ℓ, occupancy)
 end
 
 """
-    @rcs_str -> Vector{Configuration}
+    @rcs_str -> Vector{Configuration{RelativisticOrbital}}
 
 Construct a `Vector` of all `Configuration`s corresponding to the non-relativistic `nℓ`
 orbital with the given occupancy from the input string.
@@ -396,7 +394,7 @@ julia> rcs"3p2"
 ```
 """
 macro rcs_str(s)
-    configurations_from_nrstring(s)
+    rconfigurations_from_nrstring(s)
 end
 
 export Configuration, @c_str, @rc_str,
