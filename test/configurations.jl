@@ -37,6 +37,11 @@
         @test_throws ArgumentError parse(Configuration{Orbital}, "1s3")
         @test_throws ArgumentError parse(Configuration{RelativisticOrbital}, "1s3")
         @test_throws ArgumentError parse(Configuration{Orbital}, "1s2 2p-2")
+
+        @test fill(c"1s 2s 2p") == c"1s2 2s2 2p6"
+        @test fill(rc"1s 2s 2p- 2p") == rc"1s2 2s2 2p-2 2p4"
+        @test close(c"1s2") == c"1s2c"
+        @test_throws ArgumentError close(c"1s")
     end
 
     @testset "Number of electrons" begin

@@ -85,6 +85,23 @@ Base.:(==)(a::Configuration{<:O}, b::Configuration{<:O}) where {O<:AbstractOrbit
 noble_gases = Dict(Orbital => Dict{String,Configuration{<:Orbital}}(),
                    RelativisticOrbital => Dict{String,Configuration{<:RelativisticOrbital}}())
 
+"""
+    fill(configuration)
+
+Ensure all orbitals are at their maximum occupancy.
+"""
+function Base.fill(config::Configuration)
+    map(config) do (orb,occ,state)
+        orb,degeneracy(orb),state
+    end |> Configuration
+end
+
+function Base.close(config::Configuration)
+    map(config) do (orb,occ,state)
+        orb,occ,:closed
+    end |> Configuration
+end
+
 # This construct is needed since when showing configurations, they
 # will be specialized on the Orbital parameterization, which we cannot
 # index noble_gases with.
