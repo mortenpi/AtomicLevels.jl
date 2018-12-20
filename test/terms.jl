@@ -17,12 +17,12 @@ using Test
         @test T"1[3/2]" == Term(3//2, 0, p"even")
         @test T"2[3/2]o" == Term(3//2, 1//2, p"odd")
 
-        @test_throws ArgumentError AtomicLevels.term_string("1[4/3]")
-        @test_throws ArgumentError AtomicLevels.term_string("1[43/]")
-        @test_throws ArgumentError AtomicLevels.term_string("1[/43/]")
-        @test_throws ArgumentError AtomicLevels.term_string("1[/43]")
-        @test_throws ArgumentError AtomicLevels.term_string("P")
-        @test_throws ArgumentError AtomicLevels.term_string("asdf")
+        @test_throws ArgumentError parse(Term, "1[4/3]")
+        @test_throws ArgumentError parse(Term, "1[43/]")
+        @test_throws ArgumentError parse(Term, "1[/43/]")
+        @test_throws ArgumentError parse(Term, "1[/43]")
+        @test_throws ArgumentError parse(Term, "P")
+        @test_throws ArgumentError parse(Term, "asdf")
     end
 
     @testset "Properties" begin

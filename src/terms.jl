@@ -6,7 +6,7 @@ end
 Term(L::Real, S::Real, parity::Integer) =
     Term(convert(HalfInteger, L), convert(HalfInteger, S), convert(Parity, parity))
 
-function term_string(s::AbstractString)
+function Base.parse(::Type{Term}, s::AbstractString)
     m = match(r"([0-9]+)([A-Z]|\[[0-9/]+\])([oe ]{0,1})", s)
     isnothing(m) && throw(ArgumentError("Invalid term string $s"))
     L = lowercase(m[2])
@@ -29,7 +29,7 @@ function term_string(s::AbstractString)
 end
 
 macro T_str(s::AbstractString)
-    term_string(s)
+    parse(Term, s)
 end
 
 multiplicity(t::Term) = convert(Int, 2t.S + 1)
