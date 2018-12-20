@@ -34,6 +34,8 @@ macro T_str(s::AbstractString)
     parse(Term, s)
 end
 
+Base.zero(::Type{Term}) = T"1S"
+
 multiplicity(t::Term) = convert(Int, 2t.S + 1)
 weight(t::Term) = (2t.L + 1) * multiplicity(t)
 
@@ -47,31 +49,6 @@ import Base.isless
 isless(t1::Term, t2::Term) = (t1 < t2)
 
 Base.hash(t::Term) = hash((t.L,t.S,t.parity))
-
-function couple_terms(t1::Term, t2::Term)
-    # It is assumed that t1 and t2 originate from non-equivalent
-    # electrons, since the vector model does not predict correct term
-    # couplings for equivalent electrons; some of the generated terms
-    # would violate the Pauli principle; cf. Cowan p. 108–109.
-    L1 = t1.L
-    L2 = t2.L
-    S1 = t1.S
-    S2 = t2.S
-    p = t1.parity * t2.parity
-    sort(vcat([[Term(L, S, p) for S in abs(S1-S2):(S1+S2)]
-               for L in abs(L1-L2):(L1+L2)]...))
-end
-
-function couple_terms(t1s::Vector{<:Term}, t2s::Vector{<:Term})
-    ts = map(t1s) do t1
-        map(t2s) do t2
-            couple_terms(t1, t2)
-        end
-    end
-    sort(unique(vcat(vcat(ts...)...)))
-end
-
-couple_terms(ts::Vector{<:Vector{<:Term}}) = foldl(couple_terms, ts)
 
 include("xu2006.jl")
 
@@ -100,12 +77,12 @@ function terms(orb::Orbital, occ::Int)
     end
 end
 
-function terms(config::Configuration{O}) where {O<:Orbital}
+function terms(config::Configuration{O}) where {O<:AbstractOrbital}
     ts = map(config) do (orb,occ,state)
         terms(orb,occ)
     end
 
-    couple_terms(ts)
+    final_terms(ts)
 end
 
 """
@@ -173,8 +150,8 @@ Base.isless(a::IntermediateTerm, b::IntermediateTerm) =
     a.seniority < b.seniority ||
     a.seniority == b.seniority && a.term < b.term
 
-function intermediate_terms(orb::Orbital, occ::Int)
-    ts = terms(orb, occ)
+function intermediate_terms(orb::Orbital, w::Int=one(Int))
+    ts = terms(orb, w)
     its = map(unique(ts)) do t
         its = IntermediateTerm[]
         previously_seen = 0
@@ -186,7 +163,7 @@ function intermediate_terms(orb::Orbital, occ::Int)
         #
         # We have to loop in reverse, since odd occupation numbers
         # should go from 1 and even from 0.
-        for ν ∈ reverse(occ:-2:0)
+        for ν ∈ reverse(w:-2:0)
             nn = count_terms(orb, ν, t) - previously_seen
             previously_seen += nn
             append!(its, repeat([IntermediateTerm(t, ν)], nn))
@@ -196,4 +173,10 @@ function intermediate_terms(orb::Orbital, occ::Int)
     sort(vcat(its...))
 end
 
-export Term, @T_str, multiplicity, weight, couple_terms, terms, count_terms, IntermediateTerm, intermediate_terms
+function intermediate_terms(config::Configuration)
+    map(config) do (orb,occ,state)
+        intermediate_terms(orb,occ)
+    end
+end
+
+export Term, @T_str, multiplicity, weight, terms, count_terms, IntermediateTerm, intermediate_terms

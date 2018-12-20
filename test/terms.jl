@@ -165,43 +165,6 @@ using Test
         @test count_terms(o"3d", 5, T"2D") == 3
     end
 
-    @testset "Coupling" begin
-        # Coupling two 2S terms should yields singlets and triplets of S,P,D
-        @test couple_terms(Term(1,1//2,1), Term(1,1//2,1)) ==
-            sort([Term(2,0,1), Term(2,1,1), Term(0,0,1), Term(1,1,1), Term(1,0,1), Term(0,1,1)])
-
-        @test couple_terms(Term(0,1//2,1), Term(1,1//2,-1)) ==
-            sort([Term(1,0,-1), Term(1,1,-1)])
-
-        @test couple_terms(Term(0,1//2,-1), Term(1,1//2,-1)) ==
-            sort([Term(1,0,1), Term(1,1,1)])
-
-        function test_coupling(o1, o2)
-            c1 = couple_terms(terms(o1), terms(o2))
-            r = o1 + o2
-            c2 = terms(r)
-            @test c1 == c2
-        end
-
-        test_coupling(c"1s", c"2p")
-        test_coupling(c"2s", c"2p")
-        test_coupling(c"2p", c"3p")
-        test_coupling(c"2p", c"3d")
-
-        @test terms(c"1s") == [T"2S"]
-        @test terms(c"1s2") == [T"1S"]
-        @test terms(c"2p") == [T"2Po"]
-        @test terms(c"[He]") == [T"1S"]
-        @test terms(c"[Ne]") == [T"1S"]
-        @test terms(c"[Ar]") == [T"1S"]
-        @test terms(c"[Kr]") == [T"1S"]
-        @test terms(c"[Xe]") == [T"1S"]
-        @test terms(c"[Rn]") == [T"1S"]
-
-        @test terms(c"1s ks") == [T"1S", T"3S"]
-        @test terms(c"1s kp") == [T"1Po", T"3Po"]
-    end
-
     @testset "Intermediate terms" begin
         @test_throws ArgumentError IntermediateTerm(T"2S", 2)
 

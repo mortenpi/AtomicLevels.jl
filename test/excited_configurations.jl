@@ -8,8 +8,6 @@ module GRASPParser
     import AtomicLevels: CSF, csfs
     include("grasp/rcsfparser.jl")
 
-    csfs(configs::Vector{Configuration{O}}) where O = vcat(map(csfs, configs)...)
-
     compare_with_grasp(f, rcsfout) = @testset "GRASP CSFs: $(rcsfout)" begin
         grasp_csfs = parse_rcsf(joinpath(@__DIR__, "grasp", rcsfout))
         atlev_csfs = f()

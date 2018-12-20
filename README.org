@@ -351,7 +351,7 @@ bugs present in the latest release.
     possible J:s resulting from coupling =n= equivalent electrons in
     all combinations allowed by the Pauli principle.
     #+BEGIN_SRC julia :exports both :results verbatim
-      jj_terms(ro"1s", 1)
+      intermediate_terms(ro"1s", 1)
     #+END_SRC
 
     #+RESULTS:
@@ -359,7 +359,7 @@ bugs present in the latest release.
     :  1//2
     
     #+BEGIN_SRC julia :exports both :results verbatim
-      jj_terms(ro"5p", 2)
+      intermediate_terms(ro"5p", 2)
     #+END_SRC
 
     #+RESULTS:
@@ -368,7 +368,7 @@ bugs present in the latest release.
     :  2//1
     
     #+BEGIN_SRC julia :exports both :results verbatim
-      jj_terms(ro"7g", 3)
+      intermediate_terms(ro"7g", 3)
     #+END_SRC
 
     #+RESULTS:
