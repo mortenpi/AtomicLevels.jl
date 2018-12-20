@@ -31,12 +31,12 @@
 
         @test rc"1s ld-2 kp6" == Configuration([ro"1s", ro"kp-", ro"kp", ro"ld-"], [1, 2, 4, 2])
 
-        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "1sc")
-        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "1s 1s")
-        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "[He]c 1s")
-        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "1s3")
-        @test_throws ArgumentError AtomicLevels.configuration_from_string(RelativisticOrbital, "1s3")
-        @test_throws ArgumentError AtomicLevels.configuration_from_string(Orbital, "1s2 2p-2")
+        @test_throws ArgumentError parse(Configuration{Orbital}, "1sc")
+        @test_throws ArgumentError parse(Configuration{Orbital}, "1s 1s")
+        @test_throws ArgumentError parse(Configuration{Orbital}, "[He]c 1s")
+        @test_throws ArgumentError parse(Configuration{Orbital}, "1s3")
+        @test_throws ArgumentError parse(Configuration{RelativisticOrbital}, "1s3")
+        @test_throws ArgumentError parse(Configuration{Orbital}, "1s2 2p-2")
     end
 
     @testset "Number of electrons" begin

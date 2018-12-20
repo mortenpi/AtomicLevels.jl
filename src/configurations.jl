@@ -156,7 +156,7 @@ function parse_orbital(::Type{O}, orb_str) where {O<:AbstractOrbital}
     orbital_from_string(O, m[1]),m[3]=="" ? 1 : parse(Int, m[3]),state_sym(m[4])
 end
 
-function configuration_from_string(::Type{O}, conf_str::AbstractString) where {O<:AbstractOrbital}
+function Base.parse(::Type{Configuration{O}}, conf_str::AbstractString) where {O<:AbstractOrbital}
     isempty(conf_str) && return Configuration{O}()
     orbs = split(conf_str, r"[\. ]")
     core_m = match(r"\[([a-zA-Z]+)\]([*ci]{0,1})", first(orbs))
@@ -176,11 +176,11 @@ function configuration_from_string(::Type{O}, conf_str::AbstractString) where {O
 end
 
 macro c_str(conf_str)
-    configuration_from_string(Orbital, conf_str)
+    parse(Configuration{Orbital}, conf_str)
 end
 
 macro rc_str(conf_str)
-    configuration_from_string(RelativisticOrbital, conf_str)
+    parse(Configuration{RelativisticOrbital}, conf_str)
 end
 
 for O in [Orbital,RelativisticOrbital]
@@ -190,7 +190,7 @@ for O in [Orbital,RelativisticOrbital]
                 "Kr" => "[Ar] 3d10 4s2 4p6",
                 "Xe" => "[Kr] 4d10 5s2 5p6",
                 "Rn" => "[Xe] 4f14 5d10 6s2 6p6")
-        noble_gases[O][gas[1]] = configuration_from_string(O,gas[2])
+        noble_gases[O][gas[1]] = parse(Configuration{O},gas[2])
     end
 end
 
