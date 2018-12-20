@@ -1,3 +1,27 @@
+using Test
+using AtomicLevels
+# ^^^ -- to make it possible to run the test file separately
+
+module ATSPParser
+    using Test
+    using AtomicLevels
+    import AtomicLevels: CSF, csfs
+    include("atsp/csfparser.jl")
+
+    compare_with_atsp(f, csfout) = @testset "ATSP CSFs: $(csfout)" begin
+        atsp_csfs = parse_csf(joinpath(@__DIR__, "atsp", csfout))
+        atlev_csfs = f()
+        @test length(atlev_csfs) == length(atsp_csfs)
+        for atlev_csf in atlev_csfs
+            @test atlev_csf in atsp_csfs
+        end
+    end
+
+    export compare_with_atsp
+end
+
+using .ATSPParser
+
 @testset "CSFs" begin
     @testset "Construction" begin
         csf = CSF(rc"1s2 2p- 2p", [0, 1//2, 3//2], [0, 1//2, 2])
@@ -19,6 +43,18 @@
                               [IntermediateTerm(T"2S",1),IntermediateTerm(T"2Po",1)],
                               [T"2S", T"3Po"])]
             @test csfs(c"1s kp") == csfs_1s_kp
+
+            #= zgenconf input
+              OI
+                1s  2s
+                 2   4  -1   2   0   2   n_orbitals,  n_electrons, parity, n_ref, k_min, k_max
+                2p  3d
+                 0   0
+                 6  10
+            =#
+            compare_with_atsp("1s2c_2s2c_2p1_3_3d3_1.csfs") do
+                csfs(c"1s2c 2s2c" ⊗ [c"2p1 3d3", c"2p3 3d1"])
+            end
         end
         @testset "jj coupling" begin
             # These are not real tests, they only make sure that the
