@@ -4,8 +4,6 @@ abstract type AbstractOrbital end
 # value (generally used to represent continuum electrons).
 const MQ = Union{Int,Symbol}
 
-parity(orb::O) where {O<:AbstractOrbital} = p"odd"^orb.ℓ
-
 nisless(an::T, bn::T) where T = an < bn
 # Our convention is that symbolic main quantum numbers are always
 # greater than numeric ones, such that ks appears after 2p, etc.
@@ -38,48 +36,94 @@ function Base.isless(a::Orbital, b::Orbital)
     false
 end
 
+parity(orb::Orbital) = p"odd"^orb.ℓ
+
 # * Relativistic orbital
 
-function check_orbital_ℓj(ℓ::Int, j::Real)
+"""
+    kappa_to_ℓ(κ::Integer) :: Integer
+
+Calculate the `ℓ` quantum number corresponding to the `κ` quantum number.
+
+Note: `κ` and `ℓ` values are always integers.
+"""
+function kappa_to_ℓ(kappa::Integer)
+    kappa == zero(kappa) && throw(ArgumentError("κ can not be zero"))
+    (kappa < 0) ? -(kappa+1) : kappa
+end
+
+"""
+    kappa_to_j(κ::Integer) :: HalfInteger
+
+Calculate the `j` quantum number corresponding to the `κ` quantum number.
+
+Note: `κ` is always an integer.
+"""
+function kappa_to_j(kappa::Integer)
+    kappa == zero(kappa) && throw(ArgumentError("κ can not be zero"))
+    HalfInteger(twoX = 2*abs(kappa) - 1)
+end
+
+"""
+    ℓj_to_kappa(ℓ::Integer, j::Real) :: Integer
+
+Converts a valid `(ℓ, j)` pair to the corresponding `κ` value.
+
+**Note:** there is a one-to-one correspondence between valid `(ℓ,j)` pairs and `κ` values
+such that for `j = ℓ ± 1/2`, `κ = ∓(j + 1/2)`.
+"""
+function ℓj_to_kappa(ℓ::Integer, j::Real)
+    assert_orbital_ℓj(ℓ, j)
+    (j < ℓ) ? ℓ : -(ℓ + 1)
+end
+
+function assert_orbital_ℓj(ℓ::Integer, j::Real)
     j = HalfInteger(j)
     s = hi"1/2"
-    j₋ = abs(ℓ - s)
-    j₊ = ℓ+s
-    j ∈ j₋:j₊ || throw(ArgumentError("Invalid j = $(j) ∉ $(j₋):$(j₊)"))
+    (ℓ == j + s) || (ℓ == j - s) ||
+        throw(ArgumentError("Invalid (ℓ, j) = $(ℓ), $(j) pair, expected j = ℓ ± 1/2."))
+    return
 end
 
 struct RelativisticOrbital{N<:MQ} <: AbstractOrbital
     n::N
-    ℓ::Int
-    j::HalfInteger
-    function RelativisticOrbital(n::Int, ℓ::Int, j::Real=ℓ+hi"1/2")
+    κ::Int
+    function RelativisticOrbital(n::Integer, κ::Integer)
         n ≥ 1 || throw(ArgumentError("Invalid main quantum number $(n)"))
+        κ == zero(κ) && throw(ArgumentError("κ can not be zero"))
+        ℓ = kappa_to_ℓ(κ)
         0 ≤ ℓ && ℓ < n || throw(ArgumentError("Angular quantum number has to be ∈ [0,$(n-1)] when n = $(n)"))
-        check_orbital_ℓj(ℓ, j)
-        new{Int}(n, ℓ, j)
+        new{Int}(n, κ)
     end
-    function RelativisticOrbital(n::Symbol, ℓ::Int, j::Real=ℓ+hi"1/2")
-        check_orbital_ℓj(ℓ, j)
-        new{Symbol}(n, ℓ, j)
+    function RelativisticOrbital(n::Symbol, κ::Integer)
+        κ == zero(κ) && throw(ArgumentError("κ can not be zero"))
+        new{Symbol}(n, κ)
     end
 end
+RelativisticOrbital(n::MQ, ℓ::Integer, j::Real) = RelativisticOrbital(n, ℓj_to_kappa(ℓ, j))
+
 
 function Base.show(io::IO, orb::RelativisticOrbital)
-    write(io, "$(orb.n)$(spectroscopic_label(orb.ℓ))")
-    orb.j < orb.ℓ && write(io, "⁻")
+    write(io, "$(orb.n)$(spectroscopic_label(kappa_to_ℓ(orb.κ)))")
+    orb.κ > 0 && write(io, "⁻")
 end
 
-flip_j(orb::RelativisticOrbital) =
-    RelativisticOrbital(orb.n, orb.ℓ, orb.ℓ > 0 ? orb.ℓ - (orb.j - orb.ℓ) : orb.j)
+function flip_j(orb::RelativisticOrbital)
+    orb.κ == -1 && return RelativisticOrbital(orb.n, -1) # nothing to flip for s-orbitals
+    RelativisticOrbital(orb.n, orb.κ < 0 ? abs(orb.κ) - 1 : -(orb.κ + 1))
+end
 
-degeneracy(orb::RelativisticOrbital{N}) where N = convert(Int, 2*orb.j) + 1
+degeneracy(orb::RelativisticOrbital{N}) where N = 2*abs(orb.κ) # 2j + 1 = 2|κ|
 
 function Base.isless(a::RelativisticOrbital, b::RelativisticOrbital)
     nisless(a.n, b.n) && return true
-    a.n == b.n && a.ℓ < b.ℓ && return true
-    a.n == b.n && a.ℓ == b.ℓ && a.j < b.j && return true
+    aℓ, bℓ = kappa_to_ℓ(a.κ), kappa_to_ℓ(b.κ)
+    a.n == b.n && aℓ < bℓ && return true
+    a.n == b.n && aℓ == bℓ && abs(a.κ) < abs(b.κ) && return true
     false
 end
+
+parity(orb::RelativisticOrbital) = p"odd"^kappa_to_ℓ(orb.κ)
 
 # * Orbital construction from strings
 
