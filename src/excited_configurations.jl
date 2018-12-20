@@ -53,7 +53,7 @@ function excited_configurations(ref_set::Configuration{O₁},
     ref_set_core = core(ref_set)
     ref_set_peel = peel(ref_set)
 
-    # The orbitals of the reference as valid orbitals to excite to as
+    # The orbitals of the reference are valid orbitals to excite to as
     # well.
     orbitals = sort(unique(vcat(ref_set_peel.orbitals, orbitals...)))
 
