@@ -8,16 +8,20 @@ struct CSF{O<:AbstractOrbital, T<:Union{Term,HalfInteger}}
         error("Non-relativistic CSFs not yet implemented")
     end
 
-    function CSF(config::Configuration{<:RelativisticOrbital},
-                 subshell_terms::Vector{R}, terms::Vector{R}) where {R<:Real}
+    function CSF(config::Configuration{O}, subshell_terms::Vector{R},
+            terms::Vector{R}) where {O <: RelativisticOrbital, R <: Real}
         length(subshell_terms) == length(peel(config)) ||
             throw(ArgumentError("Need to provide $(length(peel(config))) subshell terms for $(config)"))
         length(terms) == length(peel(config)) ||
             throw(ArgumentError("Need to provide $(length(peel(config))) terms for $(config)"))
-        new{RelativisticOrbital,HalfInteger}(config, convert.(HalfInteger, subshell_terms),
+        new{O,HalfInteger}(config, convert.(HalfInteger, subshell_terms),
             convert.(HalfInteger, terms))
     end
 end
+
+import Base: ==
+==(a::CSF{O,T}, b::CSF{O,T}) where {O,T} =
+    (a.config == b.config) && (a.subshell_terms == b.subshell_terms) && (a.terms == b.terms)
 
 # We possibly want to sort on configuration as well
 Base.isless(a::CSF, b::CSF) = last(a.terms) < last(b.terms)
