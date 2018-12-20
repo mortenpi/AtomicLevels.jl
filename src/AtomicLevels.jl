@@ -23,5 +23,6 @@ include("jj_terms.jl")
 include("couple_terms.jl")
 include("csfs.jl")
 include("jj2lsj.jl")
+include("levels.jl")
 
 end # module
