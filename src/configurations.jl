@@ -221,7 +221,7 @@ active(conf::Configuration) = filter((orb,occ,state) -> state != :inactive, peel
 bound(conf::Configuration) = filter((orb,occ,state) -> orb.n isa Integer, conf)
 continuum(conf::Configuration) = filter((orb,occ,state) -> orb.n isa Symbol, peel(conf))
 
-parity(conf::Configuration) = p"odd"^mapreduce(o -> o[1].ℓ*o[2], +, conf)
+parity(conf::Configuration) = mapreduce(o -> parity(o[1])^o[2], *, conf)
 Base.count(conf::Configuration) = mapreduce(o -> o[2], +, conf)
 
 function Base.replace(conf::Configuration{O₁}, orbs::Pair{O₂,O₃}) where {O<:AbstractOrbital,O₁<:O,O₂<:O,O₃<:O}

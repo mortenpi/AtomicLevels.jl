@@ -53,11 +53,11 @@ We know [Eq. (3.8.58)] that
 function rotate!(block::M, orbs::RelativisticOrbital...) where {T,M<:AbstractMatrix{T}}
     size(block,1) == size(block,2) == sum(degeneracy.(orbs))-2 ||
         throw(ArgumentError("Invalid block size for $(orbs...)"))
-    ℓ = first(orbs).ℓ
+    ℓ = kappa_to_ℓ(first(orbs).κ)
     # We sort by mⱼ and remove the first and last elements since they
     # are pure and trivially unity.
     ℓms = vcat([[(ℓ,m,s) for m ∈ -ℓ:ℓ] for s = -1//2:1//2]...)[2:end-1]
-    jmⱼ = sort(vcat([[(j,mⱼ) for mⱼ ∈ -j:j] for j ∈ [convert(Rational, o.j) for o in orbs]]...), by=last)[2:end-1]
+    jmⱼ = sort(vcat([[(j,mⱼ) for mⱼ ∈ -j:j] for j ∈ [convert(Rational, kappa_to_j(o.κ)) for o in orbs]]...), by=last)[2:end-1]
     for (a,(ℓ,m,s)) in enumerate(ℓms)
         for (b,(j,mⱼ)) in enumerate(jmⱼ)
             block[a,b] = ClebschGordanℓs(ℓ,m,1//2,s,j,mⱼ)
@@ -94,16 +94,16 @@ E.g. the p-block will have the following structure:
 
 """
 function jj2lsj(::Type{T}, orbs::RelativisticOrbital...) where T
-    nℓs = map(o -> (o.n,o.ℓ), sort([orbs...]))
+    nℓs = map(o -> (o.n, kappa_to_ℓ(o.κ)), sort([orbs...]))
     blocks = map(unique(nℓs)) do (n,ℓ)
         i = findall(isequal((n,ℓ)), nℓs)
         subspace = orbs[i]
         mⱼ = map(subspace) do orb
-            j = convert(Rational, orb.j)
+            j = convert(Rational, kappa_to_j(orb.κ))
             -j:j
         end
 
-        jₘₐₓ = maximum([convert(Rational, o.j) for o in subspace])
+        jₘₐₓ = maximum([convert(Rational, kappa_to_j(o.κ)) for o in subspace])
         pure = [Matrix{T}(undef,1,1),Matrix{T}(undef,1,1)]
         pure[1][1]=ClebschGordanℓs(ℓ,-ℓ,1//2,-1//2,jₘₐₓ,-jₘₐₓ)
         pure[2][1]=ClebschGordanℓs(ℓ,ℓ,1//2,1//2,jₘₐₓ,jₘₐₓ)

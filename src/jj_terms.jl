@@ -20,7 +20,7 @@ couple_terms(J::Vector{T}, j₀::Real=zero(T)) where {T <: Real} =
     couple_terms(convert.(HalfInteger, J), convert(HalfInteger, j₀))
 
 function jj_terms(orb::RelativisticOrbital, w::Int=one(Int))
-    @unpack ℓ,j = orb
+    j = kappa_to_j(orb.κ)
     w <= 2j+1 || throw(ArgumentError("w=$w too large for $orb orbital"))
 
     2w ≥ 2j+1 && (w = convert(Int, 2j) + 1 - w)
