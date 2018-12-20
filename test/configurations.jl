@@ -150,30 +150,29 @@
     end
 
     @testset "Non-relativistic orbitals" begin
-        import AtomicLevels: configurations_from_nrorbital
-        @test configurations_from_nrorbital(1, 0, 1) == [rc"1s"]
-        @test configurations_from_nrorbital(1, 0, 2) == [rc"1s2"]
-        @test configurations_from_nrorbital(2, 0, 2) == [rc"2s2"]
+        import AtomicLevels: rconfigurations_from_orbital
+        @test rconfigurations_from_orbital(1, 0, 1) == [rc"1s"]
+        @test rconfigurations_from_orbital(1, 0, 2) == [rc"1s2"]
+        @test rconfigurations_from_orbital(2, 0, 2) == [rc"2s2"]
 
-        @test configurations_from_nrorbital(2, 1, 1) == [rc"2p-", rc"2p"]
-        @test configurations_from_nrorbital(2, 1, 2) == [rc"2p-2", rc"2p- 2p", rc"2p2"]
-        @test configurations_from_nrorbital(2, 1, 3) == [rc"2p-2 2p1", rc"2p- 2p2", rc"2p3"]
-        @test configurations_from_nrorbital(2, 1, 4) == [rc"2p-2 2p2", rc"2p- 2p3", rc"2p4"]
-        @test configurations_from_nrorbital(2, 1, 5) == [rc"2p-2 2p3", rc"2p- 2p4"]
-        @test configurations_from_nrorbital(2, 1, 6) == [rc"2p-2 2p4"]
+        @test rconfigurations_from_orbital(2, 1, 1) == [rc"2p-", rc"2p"]
+        @test rconfigurations_from_orbital(2, 1, 2) == [rc"2p-2", rc"2p- 2p", rc"2p2"]
+        @test rconfigurations_from_orbital(2, 1, 3) == [rc"2p-2 2p1", rc"2p- 2p2", rc"2p3"]
+        @test rconfigurations_from_orbital(2, 1, 4) == [rc"2p-2 2p2", rc"2p- 2p3", rc"2p4"]
+        @test rconfigurations_from_orbital(2, 1, 5) == [rc"2p-2 2p3", rc"2p- 2p4"]
+        @test rconfigurations_from_orbital(2, 1, 6) == [rc"2p-2 2p4"]
 
-        @test configurations_from_nrorbital(4, 2, 10) == [rc"4d-4 4d6"]
-        @test configurations_from_nrorbital(4, 2, 5) == [rc"4d-4 4d1", rc"4d-3 4d2", rc"4d-2 4d3", rc"4d-1 4d4", rc"4d5"]
+        @test rconfigurations_from_orbital(4, 2, 10) == [rc"4d-4 4d6"]
+        @test rconfigurations_from_orbital(4, 2, 5) == [rc"4d-4 4d1", rc"4d-3 4d2", rc"4d-2 4d3", rc"4d-1 4d4", rc"4d5"]
 
-        @test configurations_from_nrorbital(:k, 2, 5) == [rc"kd-4 kd1", rc"kd-3 kd2", rc"kd-2 kd3", rc"kd-1 kd4", rc"kd5"]
+        @test rconfigurations_from_orbital(:k, 2, 5) == [rc"kd-4 kd1", rc"kd-3 kd2", rc"kd-2 kd3", rc"kd-1 kd4", rc"kd5"]
 
-        @test_throws ArgumentError configurations_from_nrorbital(1, 2, 1)
-        @test_throws ArgumentError configurations_from_nrorbital(1, 0, 3)
+        @test_throws ArgumentError rconfigurations_from_orbital(1, 2, 1)
+        @test_throws ArgumentError rconfigurations_from_orbital(1, 0, 3)
 
-        @test configurations_from_nrorbital(ro"1s", 2) == [rc"1s2"]
-        @test configurations_from_nrorbital(ro"2p", 2) == [rc"2p-2", rc"2p- 2p", rc"2p2"]
-        @test_throws ArgumentError configurations_from_nrorbital(ro"2p-", 2)
-        @test_throws ArgumentError configurations_from_nrorbital(ro"3d", 20)
+        @test rconfigurations_from_orbital(o"1s", 2) == [rc"1s2"]
+        @test rconfigurations_from_orbital(o"2p", 2) == [rc"2p-2", rc"2p- 2p", rc"2p2"]
+        @test_throws ArgumentError rconfigurations_from_orbital(o"3d", 20)
 
         @test rcs"1s" == [rc"1s"]
         @test rcs"2s2" == [rc"2s2"]
