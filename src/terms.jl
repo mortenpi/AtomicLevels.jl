@@ -1,3 +1,5 @@
+# * Term symbols
+
 struct Term
     L::HalfInteger
     S::HalfInteger
@@ -147,4 +149,51 @@ function Base.show(io::IO, term::Term)
     write(io, to_superscript(term.parity))
 end
 
-export Term, @T_str, multiplicity, weight, couple_terms, terms, count_terms
+# * Intermediate terms, seniority
+
+struct IntermediateTerm
+    term::Term
+    seniority::Int
+    function IntermediateTerm(term::Term, seniority::Int)
+        iseven(multiplicity(term)) ⊻ iseven(seniority) ||
+            throw(ArgumentError("Invalid seniority $(seniority) for term $(term)"))
+        new(term, seniority)
+    end
+end
+
+function Base.show(io::IO, iterm::IntermediateTerm)
+    # This is the notation by Giulio Racah, p.377:
+    # - Racah, G. (1943). Theory of complex spectra. iii. Physical Review,
+    #   63(9-10), 367–382. http://dx.doi.org/10.1103/physrev.63.367
+    write(io, to_subscript(iterm.seniority))
+    show(io, iterm.term)
+end
+
+Base.isless(a::IntermediateTerm, b::IntermediateTerm) =
+    a.seniority < b.seniority ||
+    a.seniority == b.seniority && a.term < b.term
+
+function intermediate_terms(orb::Orbital, occ::Int)
+    ts = terms(orb, occ)
+    its = map(unique(ts)) do t
+        its = IntermediateTerm[]
+        previously_seen = 0
+        # The seniority number is defined as the minimum occupancy
+        # number ν ∈ n:-2:0 for which the term first appears, e.g. the
+        # ²D term first occurs in the d¹ configuration, then twice in
+        # the d³ configuration (which will then have the terms ₁²D and
+        # ₃²D).
+        #
+        # We have to loop in reverse, since odd occupation numbers
+        # should go from 1 and even from 0.
+        for ν ∈ reverse(occ:-2:0)
+            nn = count_terms(orb, ν, t) - previously_seen
+            previously_seen += nn
+            append!(its, repeat([IntermediateTerm(t, ν)], nn))
+        end
+        its
+    end
+    sort(vcat(its...))
+end
+
+export Term, @T_str, multiplicity, weight, couple_terms, terms, count_terms, IntermediateTerm, intermediate_terms
