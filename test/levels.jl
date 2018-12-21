@@ -13,5 +13,12 @@
 
         @test states.(csfs_3s_3p) == [[[State(Level(csf_1, hi"1"), M_J) for M_J ∈ hi"-1":hi"1"]],
                                       [[State(Level(csfs_3s_3p[2], J), M_J) for M_J ∈ -J:J] for J ∈ hi"0":hi"2" ]]
+
+        rcsfs_3s_3p = csfs(rc"3s" ⊗ rcs"3p")
+
+        @test states.(rcsfs_3s_3p)== [[[State(Level(rcsfs_3s_3p[1], hi"0"), hi"0")]],
+                                      [[State(Level(rcsfs_3s_3p[2], hi"1"), M_J) for M_J ∈ hi"-1":hi"1"]],
+                                      [[State(Level(rcsfs_3s_3p[3], hi"1"), M_J) for M_J ∈ hi"-1":hi"1"]],
+                                      [[State(Level(rcsfs_3s_3p[4], hi"2"), M_J) for M_J ∈ hi"-2":hi"2"]]]
     end
 end

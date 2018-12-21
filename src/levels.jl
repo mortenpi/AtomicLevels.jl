@@ -23,6 +23,7 @@ Base.isless(l1::Level, l2::Level) = ((l1.csf < l2.csf)) ||
     ((l1.csf == l2.csf)) && (l1.J < l2.J)
 
 J_range(term::Term) = abs(term.L-term.S):(term.L+term.S)
+J_range(term::HalfInteger) = term:term
 
 levels(csf::CSF) = sort([Level(csf,J) for J in J_range(last(csf.terms))])
 
