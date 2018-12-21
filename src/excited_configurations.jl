@@ -46,6 +46,12 @@ function excited_configurations(ref_set::Configuration{O₁},
         end
     end
 
+    lp = length(peel(ref_set))
+    length(min_occupancy) == lp ||
+        throw(ArgumentError("Need to specify $(lp) minimum occupancies for active subshells: $(peel(ref_set))"))
+    length(max_occupancy) == lp ||
+        throw(ArgumentError("Need to specify $(lp) maximum occupancies for active subshells: $(peel(ref_set))"))
+
     all(min_occupancy .>= 0) || throw(ArgumentError("Invalid minimum occupancy requested"))
     all(max_occupancy .<= [degeneracy(first(o)) for o in peel(ref_set)]) ||
         throw(ArgumentError("Invalid maximum occupancy requested"))
