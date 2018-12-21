@@ -26,8 +26,8 @@ struct CSF{O<:AbstractOrbital, IT<:Union{IntermediateTerm,HalfInteger}, T<:Union
     end
 end
 
-const NonRelativisticCSF = CSF{Orbital,IntermediateTerm,Term}
-const RelativisticCSF = CSF{RelativisticOrbital,HalfInteger,HalfInteger}
+const NonRelativisticCSF = CSF{<:Orbital,IntermediateTerm,Term}
+const RelativisticCSF = CSF{<:RelativisticOrbital,HalfInteger,HalfInteger}
 
 Base.:(==)(a::CSF{O,T}, b::CSF{O,T}) where {O,T} =
     (a.config == b.config) && (a.subshell_terms == b.subshell_terms) && (a.terms == b.terms)
