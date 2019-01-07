@@ -38,6 +38,9 @@ end
 
 parity(orb::Orbital) = p"odd"^orb.ℓ
 
+isbound(::Orbital{Int}) = true
+isbound(::Orbital{Symbol}) = false
+
 # * Relativistic orbital
 
 """
@@ -125,6 +128,9 @@ end
 
 parity(orb::RelativisticOrbital) = p"odd"^kappa_to_ℓ(orb.κ)
 
+isbound(::RelativisticOrbital{Int}) = true
+isbound(::RelativisticOrbital{Symbol}) = false
+
 # * Orbital construction from strings
 
 parse_orbital_n(m::RegexMatch,i=1) =
@@ -189,4 +195,4 @@ macro ros_str(orbs_str)
     orbitals_from_string(RelativisticOrbital, orbs_str)
 end
 
-export Orbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity
+export Orbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity, isbound

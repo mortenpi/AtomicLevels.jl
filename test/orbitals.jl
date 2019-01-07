@@ -138,4 +138,15 @@ using Random
 
         @test isodd(parity(ro"kp"))
     end
+
+    @testset "Bound" begin
+        @test isbound(o"1s")
+        @test isbound(o"3d")
+        @test isbound(ro"1s")
+        @test isbound(ro"3d")
+        @test !isbound(o"ks")
+        @test !isbound(o"ϵd")
+        @test !isbound(ro"ks")
+        @test !isbound(ro"ϵd")
+    end
 end
