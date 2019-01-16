@@ -5,6 +5,9 @@ using Formatting
 using Parameters
 using BlockBandedMatrices
 using WignerSymbols
+macro hi_str(s)
+    parse(HalfInteger, s)
+end
 
 if VERSION < v"1.1-DEV"
     isnothing(::Nothing) = true
@@ -13,7 +16,6 @@ end
 
 include("common.jl")
 include("parity.jl")
-include("halfinteger.jl")
 include("orbitals.jl")
 include("configurations.jl")
 include("excited_configurations.jl")

@@ -64,7 +64,7 @@ Note: `κ` is always an integer.
 """
 function kappa_to_j(kappa::Integer)
     kappa == zero(kappa) && throw(ArgumentError("κ can not be zero"))
-    HalfInteger(twoX = 2*abs(kappa) - 1)
+    HalfInteger(2*abs(kappa) - 1, 2)
 end
 
 """

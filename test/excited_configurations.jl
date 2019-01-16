@@ -6,6 +6,7 @@ module GRASPParser
 using Test
 using AtomicLevels
 import AtomicLevels: CSF, csfs
+using WignerSymbols
 include("grasp/rcsfparser.jl")
 
 compare_with_grasp(f, rcsfout) = @testset "GRASP CSFs: $(rcsfout)" begin
