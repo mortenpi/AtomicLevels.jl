@@ -191,4 +191,9 @@
         @test rc"1s2" ⊗ rcs"2p" == [rc"1s2 2p-", rc"1s2 2p"]
         @test rc"1s2" ⊗ rcs"kp" == [rc"1s2 kp-", rc"1s2 kp"]
     end
+
+    @testset "Spin-orbitals" begin
+        @test_throws ArgumentError Configuration(spin_orbitals(o"1s"), [2,1])
+        @test_throws ArgumentError Configuration(spin_orbitals(o"1s"), [1,2])
+    end
 end

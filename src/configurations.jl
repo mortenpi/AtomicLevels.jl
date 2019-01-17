@@ -26,7 +26,7 @@ struct Configuration{O<:AbstractOrbital}
             orb = orbitals[i]
             degen_orb = degeneracy(orb)
             if occ > degen_orb
-                if O <: Orbital
+                if O <: Orbital || O <: SpinOrbital
                     throw(ArgumentError("Higher occupancy than possible for $(orb) with degeneracy $(degen_orb)"))
                 elseif O <: RelativisticOrbital
                     orb_conj = flip_j(orb)
@@ -235,8 +235,8 @@ core(conf::Configuration) = filter((orb,occ,state) -> state == :closed, conf)
 peel(conf::Configuration) = filter((orb,occ,state) -> state != :closed, conf)
 inactive(conf::Configuration) = filter((orb,occ,state) -> state == :inactive, conf)
 active(conf::Configuration) = filter((orb,occ,state) -> state != :inactive, peel(conf))
-bound(conf::Configuration) = filter((orb,occ,state) -> orb.n isa Integer, conf)
-continuum(conf::Configuration) = filter((orb,occ,state) -> orb.n isa Symbol, peel(conf))
+bound(conf::Configuration) = filter((orb,occ,state) -> isbound(orb), conf)
+continuum(conf::Configuration) = filter((orb,occ,state) -> !isbound(orb), peel(conf))
 
 parity(conf::Configuration) = mapreduce(o -> parity(o[1])^o[2], *, conf)
 Base.count(conf::Configuration) = mapreduce(o -> o[2], +, conf)

@@ -41,6 +41,52 @@ parity(orb::Orbital) = p"odd"^orb.ℓ
 isbound(::Orbital{Int}) = true
 isbound(::Orbital{Symbol}) = false
 
+mℓrange(orb::Orbital) = (-orb.ℓ:orb.ℓ)
+
+# ** Spin orbitals
+#
+# Spin orbitals are fully characterized orbitals, i.e. the quantum
+# numbers n,ℓ,mℓ,ms are all specified.
+
+struct SpinOrbital{N} <: AbstractOrbital
+    orb::Orbital{N}
+    mℓ::Int
+    spin::Bool
+    function SpinOrbital(orb::Orbital{N}, mℓ::Int, spin::Bool) where N
+        abs(mℓ) ≤ orb.ℓ ||
+            throw(ArgumentError("Magnetic quantum number not in valid range -$(orb.ℓ)..$(orb.ℓ)"))
+        new{N}(orb, mℓ, spin)
+    end
+end
+function Base.show(io::IO, so::SpinOrbital)
+    show(io, so.orb)
+    write(io, to_subscript(so.mℓ))
+    write(io, so.spin ? "α" : "β")
+end
+
+degeneracy(::SpinOrbital) = 1
+
+Base.isless(a::SpinOrbital, b::SpinOrbital) =
+    a.orb < b.orb ||
+    a.orb == b.orb && a.mℓ < b.mℓ ||
+    a.orb == b.orb && a.mℓ == b.mℓ && a.spin > b.spin # We prefer α < β
+
+parity(so::SpinOrbital) = parity(so.orb)
+isbound(so::SpinOrbital) = isbound(so.orb)
+
+"""
+    spin_orbitals(orbital)
+
+Generate all permissible spin-orbitals for a given `orbital`, e.g. 2p -> 2p ⊗ mℓ = {-1,0,1} ⊗ s = {α,β}
+"""
+function spin_orbitals(orb::O) where {O<:Orbital}
+    map([true,false]) do spin
+        map(mℓrange(orb)) do mℓ
+            SpinOrbital(orb, mℓ, spin)
+        end
+    end |> so -> vcat(so...) |> sort
+end
+
 # * Relativistic orbital
 
 """
@@ -195,4 +241,4 @@ macro ros_str(orbs_str)
     orbitals_from_string(RelativisticOrbital, orbs_str)
 end
 
-export Orbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity, isbound
+export Orbital, SpinOrbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity, isbound, mℓrange, spin_orbitals

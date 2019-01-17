@@ -149,4 +149,50 @@ using Random
         @test !isbound(ro"ks")
         @test !isbound(ro"ϵd")
     end
+
+    @testset "Magnetic quantum numbers" begin
+        @test mℓrange(o"1s") == 0:0
+        @test mℓrange(o"2p") == -1:1
+        @test mℓrange(o"3d") == -2:2
+    end
+
+    @testset "Spin orbitals" begin
+        @test_throws ArgumentError SpinOrbital(o"1s", 1, true)
+        @test_throws ArgumentError SpinOrbital(o"ks", 1, true)
+        @test_throws ArgumentError SpinOrbital(o"2p", -3, true)
+
+        soα = SpinOrbital(o"1s", 0, true)
+        soβ = SpinOrbital(o"1s", 0, false)
+
+        po₋α = SpinOrbital(o"2p", -1, true)
+        po₀α = SpinOrbital(o"2p", 0, true)
+        po₊α = SpinOrbital(o"2p", 1, true)
+        po₋β = SpinOrbital(o"2p", -1, false)
+        po₀β = SpinOrbital(o"2p", 0, false)
+        po₊β = SpinOrbital(o"2p", 1, false)
+
+        @test degeneracy(soα) == 1
+        @test soα < soβ
+
+        @test parity(soα) == parity(soβ) == p"even"
+
+        @test parity(po₋α) == p"odd"
+        @test parity(po₀α) == p"odd"
+        @test parity(po₊α) == p"odd"
+        @test parity(po₋β) == p"odd"
+        @test parity(po₀β) == p"odd"
+        @test parity(po₊β) == p"odd"
+
+        @test isbound(soα)
+        @test !isbound(SpinOrbital(o"ks", 0, true))
+
+        @test spin_orbitals(o"1s") == [soα, soβ]
+        @test spin_orbitals(o"2p") == [po₋α, po₋β, po₀α, po₀β, po₊α, po₊β]
+        for orb in [o"1s", o"2p", o"3d", o"4f", o"5g"]
+            @test length(spin_orbitals(orb)) == degeneracy(orb)
+        end
+
+        @test "$(soα)" == "1s₀α"
+        @test "$(po₊β)" == "2p₁β"
+    end
 end
