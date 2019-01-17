@@ -435,5 +435,36 @@ macro rcs_str(s)
     rconfigurations_from_nrstring(s)
 end
 
+
+"""
+    spin_configurations(configuration)
+
+Generate all possible configurations of spin-orbitals from
+`configuration`, i.e. all permissible values for the quantum numbers
+`n`, `ℓ`, `mℓ`, `ms` for each electron. Example:
+
+    spin_configuration(c"1s2") -> 1s₀α 1s₀β
+"""
+function spin_configurations(c::Configuration{<:Orbital})
+    orbitals = map(c) do (orb,occ,state)
+        sorbs = spin_orbitals(orb)
+        collect(combinations(sorbs, occ)) |> Vector{Vector{SpinOrbital}}
+    end
+    map(allchoices(orbitals)) do choice
+        c = vcat(choice...)
+        Configuration(c, ones(Int,length(c)))
+    end
+end
+
+"""
+    spin_configurations(configurations)
+
+For each configuration in `configurations`, generate all possible
+configurations of spin-orbitals.
+"""
+spin_configurations(cs::Vector{<:Configuration}) =
+    sort(vcat(map(spin_configurations, cs)...))
+
 export Configuration, @c_str, @rc_str,
-    num_electrons, core, peel, active, inactive, bound, continuum, parity, ⊗, @rcs_str
+    num_electrons, core, peel, active, inactive, bound, continuum, parity, ⊗, @rcs_str,
+    spin_configurations

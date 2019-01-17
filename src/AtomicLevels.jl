@@ -8,6 +8,7 @@ using WignerSymbols
 macro hi_str(s)
     parse(HalfInteger, s)
 end
+using Combinatorics
 
 if VERSION < v"1.1-DEV"
     isnothing(::Nothing) = true

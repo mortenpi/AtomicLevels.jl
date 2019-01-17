@@ -203,5 +203,50 @@
     @testset "Spin-orbitals" begin
         @test_throws ArgumentError Configuration(spin_orbitals(o"1s"), [2,1])
         @test_throws ArgumentError Configuration(spin_orbitals(o"1s"), [1,2])
+
+        @test spin_configurations(c"1s2") ==
+            [Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"1s",0,false)], [1, 1])]
+
+        @test spin_configurations(c"1s 2p") ==
+            [Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"2p",-1,true)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"2p",-1,false)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"2p",0,true)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"2p",0,false)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"2p",1,true)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"2p",1,false)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"2p",-1,true)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"2p",-1,false)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"2p",0,true)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"2p",0,false)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"2p",1,true)], [1, 1]),
+             Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"2p",1,false)], [1, 1])]
+
+        @test spin_configurations(
+            excited_configurations(c"1s2", os"k[s-p]"..., max_excitations=:singles, keep_parity=false)) ==
+                [Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"1s",0,false)], [1, 1]),
+
+                 Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"ks",0,true)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"ks",0,false)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"kp",-1,true)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"kp",-1,false)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"kp",0,true)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"kp",0,false)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"kp",1,true)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"kp",1,false)], [1, 1]),
+
+                 Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"ks",0,true)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"ks",0,false)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"kp",-1,true)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"kp",-1,false)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"kp",0,true)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"kp",0,false)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"kp",1,true)], [1, 1]),
+                 Configuration([SpinOrbital(o"1s",0,false), SpinOrbital(o"kp",1,false)], [1, 1])]
+
+        @test bound(Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"ks",0,true)], [1, 1])) ==
+            Configuration([SpinOrbital(o"1s",0,true),], [1,])
+
+        @test continuum(Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"ks",0,true)], [1, 1])) ==
+            Configuration([SpinOrbital(o"ks",0,true),], [1,])
     end
 end
