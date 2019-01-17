@@ -223,6 +223,27 @@ Base.length(conf::Configuration) = length(conf.orbitals)
 Base.lastindex(conf::Configuration) = length(conf)
 Base.eltype(conf::Configuration{O}) where O = (O,Int,Symbol)
 
+function Base.isless(a::Configuration{<:O}, b::Configuration{<:O}) where {O<:AbstractOrbital}
+    l = min(length(a),length(b))
+    # If they are equal up to orbital l, designate the shorter config
+    # as the smaller one.
+    a[1:l] == b[1:l] && return length(a) == l
+    norm_occ = (orb,w) -> 2w ≥ degeneracy(orb) ? degeneracy(orb) - w : w
+    for ((orba,occa,statea),(orbb,occb,stateb)) in zip(a[1:l],b[1:l])
+        if orba < orbb
+            return true
+        elseif orba == orbb
+            # This is slightly arbitrary, but we designate the orbital
+            # with occupation closest to a filled shell as the smaller
+            # one.
+            norm_occ(orba,occa) < norm_occ(orbb,occb) && return true
+        else
+            return false
+        end
+    end
+    false
+end
+
 num_electrons(conf::Configuration) = sum(conf.occupancy)
 
 Base.in(orb::Orbital, conf::Configuration{O}) where O =

@@ -81,6 +81,14 @@
         @test o"1s" ∈ c"[He]"
     end
 
+    @testset "Sorting" begin
+        @test c"1s2" < c"1s 2s"
+        @test c"1s2" < c"1s 2p"
+        @test c"1s2" < c"ks2"
+        # @test c"kp2" < c"kp kd" # Ideally this would be true, but too
+        #                         # complicated to implement
+    end
+
     @testset "Parity" begin
         @test iseven(parity(c"1s"))
         @test iseven(parity(c"1s2"))
