@@ -74,6 +74,11 @@ Base.isless(a::SpinOrbital, b::SpinOrbital) =
 parity(so::SpinOrbital) = parity(so.orb)
 isbound(so::SpinOrbital) = isbound(so.orb)
 
+Base.promote_type(::Type{SpinOrbital{N}}, ::Type{SpinOrbital}) where N = SpinOrbital
+Base.promote_type(::Type{SpinOrbital}, ::Type{SpinOrbital{N}}) where N = SpinOrbital
+Base.promote_type(::Type{SpinOrbital{<:Integer}}, ::Type{SpinOrbital{Symbol}}) = SpinOrbital
+Base.promote_type(::Type{SpinOrbital{Symbol}}, ::Type{SpinOrbital{<:Integer}}) = SpinOrbital
+
 """
     spin_orbitals(orbital)
 
