@@ -248,5 +248,9 @@
 
         @test continuum(Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"ks",0,true)], [1, 1])) ==
             Configuration([SpinOrbital(o"ks",0,true),], [1,])
+
+        @test map(spin_configurations(c"[Kr] 5s2 5p6")[1]) do (orb,occ,state)
+            orb.orb.n < 5 && state == :closed || orb.orb.n == 5 && state == :open
+        end |> all
     end
 end
