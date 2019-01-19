@@ -468,6 +468,39 @@ configurations of spin-orbitals.
 spin_configurations(cs::Vector{<:Configuration}) =
     sort(vcat(map(spin_configurations, cs)...))
 
+function Base.show(io::IO, c::Configuration{<:SpinOrbital})
+    orbitals = Dict{Orbital, Vector{<:SpinOrbital}}()
+    core_orbitals = sort(unique(map(o -> o.orb, core(c).orbitals)))
+    core_cfg = Configuration(core_orbitals, ones(Int, length(core_orbitals))) |> fill |> close
+
+    if !isempty(core_cfg)
+        show(io, core_cfg)
+        write(io, " ")
+    end
+    for orb in peel(c).orbitals
+        orbitals[orb.orb] = push!(get(orbitals, orb.orb, SpinOrbital[]), orb)
+    end
+    map(sort(collect(keys(orbitals)))) do orb
+        ℓ = orb.ℓ
+        g = degeneracy(orb)
+        sub_shell = orbitals[orb]
+        if length(sub_shell) == g
+            format("{1:s}{2:s}", orb, to_superscript(g))
+        else
+            map(mℓrange(orb)) do mℓ
+                mℓshell = findall(o -> o.mℓ == mℓ, sub_shell)
+                if length(mℓshell) == 2
+                    format("{1:s}{2:s}{3:s}", orb, to_subscript(mℓ), to_superscript(2))
+                elseif length(mℓshell) == 1
+                    string(sub_shell[mℓshell[1]])
+                else
+                    ""
+                end
+            end |> so -> join(filter(s -> !isempty(s), so), " ")
+        end
+    end |> so -> write(io, join(so, " "))
+end
+
 export Configuration, @c_str, @rc_str,
     num_electrons, core, peel, active, inactive, bound, continuum, parity, ⊗, @rcs_str,
     spin_configurations

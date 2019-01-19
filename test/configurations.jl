@@ -252,5 +252,44 @@
         @test map(spin_configurations(c"[Kr] 5s2 5p6")[1]) do (orb,occ,state)
             orb.orb.n < 5 && state == :closed || orb.orb.n == 5 && state == :open
         end |> all
+
+        @test string.(spin_configurations(c"2s2 2p")) ==
+            ["2s² 2p₋₁α",
+             "2s² 2p₋₁β",
+             "2s² 2p₀α",
+             "2s² 2p₀β",
+             "2s² 2p₁α",
+             "2s² 2p₁β"]
+
+        @test string.(spin_configurations(c"[Kr] 5s2 5p5 ks")) ==
+            ["[Kr]ᶜ 5s² 5p₋₁² 5p₀² 5p₁α ks₀α",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀² 5p₁α ks₀β",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀² 5p₁β ks₀α",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀² 5p₁β ks₀β",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀α 5p₁² ks₀α",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀α 5p₁² ks₀β",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀β 5p₁² ks₀α",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀β 5p₁² ks₀β",
+             "[Kr]ᶜ 5s² 5p₋₁α 5p₀² 5p₁² ks₀α",
+             "[Kr]ᶜ 5s² 5p₋₁α 5p₀² 5p₁² ks₀β",
+             "[Kr]ᶜ 5s² 5p₋₁β 5p₀² 5p₁² ks₀α",
+             "[Kr]ᶜ 5s² 5p₋₁β 5p₀² 5p₁² ks₀β"]
+
+        @test string.(spin_configurations(c"[Kr] 5s2 5p4")) ==
+            ["[Kr]ᶜ 5s² 5p₋₁² 5p₀²",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀α 5p₁α",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀α 5p₁β",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀β 5p₁α",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₀β 5p₁β",
+             "[Kr]ᶜ 5s² 5p₋₁² 5p₁²",
+             "[Kr]ᶜ 5s² 5p₋₁α 5p₀² 5p₁α",
+             "[Kr]ᶜ 5s² 5p₋₁α 5p₀² 5p₁β",
+             "[Kr]ᶜ 5s² 5p₋₁α 5p₀α 5p₁²",
+             "[Kr]ᶜ 5s² 5p₋₁α 5p₀β 5p₁²",
+             "[Kr]ᶜ 5s² 5p₋₁β 5p₀² 5p₁α",
+             "[Kr]ᶜ 5s² 5p₋₁β 5p₀² 5p₁β",
+             "[Kr]ᶜ 5s² 5p₋₁β 5p₀α 5p₁²",
+             "[Kr]ᶜ 5s² 5p₋₁β 5p₀β 5p₁²",
+             "[Kr]ᶜ 5s² 5p₀² 5p₁²"]
     end
 end
