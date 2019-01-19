@@ -32,6 +32,11 @@ using .GRASPParser
         @test_throws ArgumentError excited_configurations(rc"[Kr] 5s2 5p6", min_occupancy=[-1,0,0])
         @test_throws ArgumentError excited_configurations(rc"[Kr] 5s2 5p6", max_occupancy=[3,2,4])
     end
+    
+    @testset "Ion–continuum" begin
+        @test ion_continuum(c"1s2", os"k[s-d]") == [c"1s2", c"1s ks", c"1s kp", c"1s kd"]
+    end
+    
     @testset "GRASP comparisons" begin
         @test excited_configurations(c"1s2", os"2[s-p]"...) ==
             [c"1s2", c"1s 2s", c"2s2", c"2p2"]

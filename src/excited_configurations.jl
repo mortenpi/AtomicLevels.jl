@@ -75,4 +75,10 @@ function excited_configurations(ref_set::Configuration{O₁},
     [ref_set_core + e for e in excitations]
 end
 
-export excited_configurations
+ion_continuum(neutral::Configuration{<:Orbital{<:Integer}},
+              continuum_orbitals::Vector{Orbital{Symbol}},
+              max_excitations=:singles) =
+    excited_configurations(neutral, continuum_orbitals...;
+                           max_excitations=max_excitations, keep_parity=false)
+
+export excited_configurations, ion_continuum
