@@ -501,6 +501,34 @@ function Base.show(io::IO, c::Configuration{<:SpinOrbital})
     end |> so -> write(io, join(so, " "))
 end
 
+"""
+    substitutions(src::Configuration{<:SpinOrbital}, dst::Configuration{<:SpinOrbital})
+
+Find all orbital substitutions going from spin-configuration `src` to
+configuration `dst`.
+"""
+function substitutions(src::Configuration{A}, dst::Configuration{B}) where {A<:SpinOrbital,B<:SpinOrbital}
+    src == dst && return []
+    # This is only valid for spin-configurations, since occupation
+    # numbers are not dealt with.
+    num_electrons(src) == num_electrons(dst) ||
+        throw(ArgumentError("Configurations not of same amount of electrons"))
+    r = Vector{Pair{A,B}}()
+    missing = A[]
+    same = Int[]
+    for (i,(orb,occ,state)) in enumerate(src)
+        j = findfirst(isequal(orb), dst.orbitals)
+        if j === nothing
+            push!(missing, orb)
+        else
+            push!(same, j)
+        end
+    end
+    new = [j for j ∈ 1:num_electrons(dst)
+           if j ∉ same]
+    [mo => dst.orbitals[j] for (mo,j) in zip(missing, new)]
+end
+
 export Configuration, @c_str, @rc_str,
     num_electrons, core, peel, active, inactive, bound, continuum, parity, ⊗, @rcs_str,
-    spin_configurations
+    spin_configurations, substitutions

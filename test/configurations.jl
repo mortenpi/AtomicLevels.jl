@@ -291,5 +291,12 @@
              "[Kr]ᶜ 5s² 5p₋₁β 5p₀α 5p₁²",
              "[Kr]ᶜ 5s² 5p₋₁β 5p₀β 5p₁²",
              "[Kr]ᶜ 5s² 5p₀² 5p₁²"]
+
+        @test substitutions(spin_configurations(c"1s2")[1],
+                            spin_configurations(c"1s2")[1]) == []
+
+        @test substitutions(spin_configurations(c"1s2")[1],
+                            spin_configurations(c"1s ks")[3]) ==
+                                [SpinOrbital(o"1s",0,true)=>SpinOrbital(o"ks",0,true)]
     end
 end
