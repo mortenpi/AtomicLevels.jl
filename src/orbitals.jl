@@ -48,14 +48,14 @@ mℓrange(orb::Orbital) = (-orb.ℓ:orb.ℓ)
 # Spin orbitals are fully characterized orbitals, i.e. the quantum
 # numbers n,ℓ,mℓ,ms are all specified.
 
-struct SpinOrbital{N} <: AbstractOrbital
-    orb::Orbital{N}
+struct SpinOrbital{O<:Orbital} <: AbstractOrbital
+    orb::O
     mℓ::Int
     spin::Bool
-    function SpinOrbital(orb::Orbital{N}, mℓ::Int, spin::Bool) where N
+    function SpinOrbital(orb::O, mℓ::Int, spin::Bool) where {O<:Orbital}
         abs(mℓ) ≤ orb.ℓ ||
             throw(ArgumentError("Magnetic quantum number not in valid range -$(orb.ℓ)..$(orb.ℓ)"))
-        new{N}(orb, mℓ, spin)
+        new{O}(orb, mℓ, spin)
     end
 end
 function Base.show(io::IO, so::SpinOrbital)
@@ -74,10 +74,10 @@ Base.isless(a::SpinOrbital, b::SpinOrbital) =
 parity(so::SpinOrbital) = parity(so.orb)
 isbound(so::SpinOrbital) = isbound(so.orb)
 
-Base.promote_type(::Type{SpinOrbital{N}}, ::Type{SpinOrbital}) where N = SpinOrbital
-Base.promote_type(::Type{SpinOrbital}, ::Type{SpinOrbital{N}}) where N = SpinOrbital
-Base.promote_type(::Type{SpinOrbital{<:Integer}}, ::Type{SpinOrbital{Symbol}}) = SpinOrbital
-Base.promote_type(::Type{SpinOrbital{Symbol}}, ::Type{SpinOrbital{<:Integer}}) = SpinOrbital
+Base.promote_type(::Type{SpinOrbital{O}}, ::Type{SpinOrbital}) where O = SpinOrbital
+Base.promote_type(::Type{SpinOrbital}, ::Type{SpinOrbital{O}}) where O = SpinOrbital
+Base.promote_type(::Type{SpinOrbital{Orbital{I}}}, ::Type{SpinOrbital{Orbital{Symbol}}}) where {I<:Integer} = SpinOrbital
+Base.promote_type(::Type{SpinOrbital{Orbital{Symbol}}}, ::Type{SpinOrbital{Orbital{I}}}) where {I<:Integer} = SpinOrbital
 
 """
     spin_orbitals(orbital)

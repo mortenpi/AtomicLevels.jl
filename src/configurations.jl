@@ -445,12 +445,13 @@ Generate all possible configurations of spin-orbitals from
 
     spin_configuration(c"1s2") -> 1s₀α 1s₀β
 """
-function spin_configurations(c::Configuration{<:Orbital})
+function spin_configurations(c::Configuration{O}) where {O<:Orbital}
     states = Dict{Orbital,Symbol}()
     orbitals = map(c) do (orb,occ,state)
         states[orb] = state
         sorbs = spin_orbitals(orb)
-        collect(combinations(sorbs, occ)) |> Vector{Vector{SpinOrbital}}
+        comb = collect(combinations(sorbs, occ))
+        O == Orbital ? Vector{Vector{SpinOrbital}}(comb) : comb
     end
     map(allchoices(orbitals)) do choice
         c = vcat(choice...)
