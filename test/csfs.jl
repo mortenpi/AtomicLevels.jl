@@ -29,6 +29,7 @@ using .ATSPParser
         @test csf isa RelativisticCSF
         @test csf == csf
         @test csf != CSF(rc"1s2 2p- 2p", [0, 1//2, 3//2], [0, 1//2, 1])
+        @test num_electrons(csf) == 4
 
         @test CSF(c"1s2 2p", [IntermediateTerm(T"1S",0), IntermediateTerm(T"2Po", 1)], [T"1S", T"2Po"]) isa NonRelativisticCSF
     end

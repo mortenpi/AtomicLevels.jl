@@ -35,6 +35,8 @@ Base.:(==)(a::CSF{O,T}, b::CSF{O,T}) where {O,T} =
 # We possibly want to sort on configuration as well
 Base.isless(a::CSF, b::CSF) = last(a.terms) < last(b.terms)
 
+num_electrons(csf::CSF) = num_electrons(csf.config)
+
 function csfs(config::Configuration)
     map(allchoices(intermediate_terms(peel(config)))) do subshell_terms
         map(intermediate_couplings(subshell_terms)) do coupled_terms
