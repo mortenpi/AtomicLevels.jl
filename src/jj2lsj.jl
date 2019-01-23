@@ -50,24 +50,27 @@ We know [Eq. (3.8.58)] that
 ⟨ℓs;±ℓ,±1/2|ℓs;ℓ±1/2,ℓ±1/2⟩ = 1.
 
 =#
-function rotate!(block::M, orbs::RelativisticOrbital...) where {T,M<:AbstractMatrix{T}}
-    size(block,1) == size(block,2) == sum(degeneracy.(orbs))-2 ||
+function rotate!(blocks::Vector{M}, orbs::RelativisticOrbital...) where {T,M<:AbstractMatrix{T}}
+    2length(blocks) == sum(degeneracy.(orbs))-2 ||
         throw(ArgumentError("Invalid block size for $(orbs...)"))
     ℓ = kappa_to_ℓ(first(orbs).κ)
     # We sort by mⱼ and remove the first and last elements since they
     # are pure and trivially unity.
-    ℓms = vcat([[(ℓ,m,s) for m ∈ -ℓ:ℓ] for s = -1//2:1//2]...)[2:end-1]
+    ℓms = sort(vcat([[(ℓ,m,s) for m ∈ -ℓ:ℓ] for s = -1//2:1//2]...)[2:end-1], by=((ℓms)) -> +(ℓms[2:3]...))
     jmⱼ = sort(vcat([[(j,mⱼ) for mⱼ ∈ -j:j] for j ∈ [convert(Rational, kappa_to_j(o.κ)) for o in orbs]]...), by=last)[2:end-1]
     for (a,(ℓ,m,s)) in enumerate(ℓms)
+        bi = cld(a, 2)
+        o = 2*(bi-1)
         for (b,(j,mⱼ)) in enumerate(jmⱼ)
-            block[a,b] = ClebschGordanℓs(ℓ,m,1//2,s,j,mⱼ)
+            b-o ∉ 1:2 && continue
+            blocks[bi][a-o,b-o] = ClebschGordanℓs(ℓ,m,1//2,s,j,mⱼ)
         end
     end
-    block
+    blocks
 end
 
 """
-    jj2lsj(orbs...)
+    jj2lsj([T=Float64, ]orbs...)
 
 Generates the block-diagonal matrix that transforms jj-coupled
 configurations to lsj-coupled ones.
@@ -82,14 +85,15 @@ s,ℓ,m (increasing).
 E.g. the p-block will have the following structure:
 
 ```
- ⟨p;-1,↓|3/2,-3/2⟩  │         ⋅                  ⋅                  ⋅                 ⋅          │         ⋅
- ───────────────────┼────────────────────────────────────────────────────────────────────────────┼─────────────────
-        ⋅           │  ⟨p;0,↓|1/2,-1/2⟩   ⟨p;0,↓|3/2,-1/2⟩   ⟨p;0,↓|1/2,1/2⟩   ⟨p;0,↓|3/2,1/2⟩   │         ⋅
-        ⋅           │  ⟨p;1,↓|1/2,-1/2⟩   ⟨p;1,↓|3/2,-1/2⟩   ⟨p;1,↓|1/2,1/2⟩   ⟨p;1,↓|3/2,1/2⟩   │         ⋅
-        ⋅           │  ⟨p;-1,↑|1/2,-1/2⟩  ⟨p;-1,↑|3/2,-1/2⟩  ⟨p;-1,↑|1/2,1/2⟩  ⟨p;-1,↑|3/2,1/2⟩  │         ⋅
-        ⋅           │  ⟨p;0,↑|1/2,-1/2⟩   ⟨p;0,↑|3/2,-1/2⟩   ⟨p;0,↑|1/2,1/2⟩   ⟨p;0,↑|3/2,1/2⟩   │         ⋅
- ───────────────────┼────────────────────────────────────────────────────────────────────────────┼─────────────────
-        ⋅           │         ⋅                  ⋅                  ⋅                 ⋅          │  ⟨p;1,↑|3/2,3/2⟩
+ ⟨p;-1,↓|3/2,-3/2⟩  │       ⋅                  ⋅             │       ⋅                ⋅           │       ⋅
+ ───────────────────┼────────────────────────────────────────┼────────────────────────────────────┼─────────────────
+      ⋅             │  ⟨p;0,↓|1/2,-1/2⟩   ⟨p;0,↓|3/2,-1/2⟩   │       ⋅                ⋅           │       ⋅
+      ⋅             │  ⟨p;-1,↑|1/2,-1/2⟩  ⟨p;-1,↑|3/2,-1/2⟩  │       ⋅                ⋅           │       ⋅
+ ───────────────────┼────────────────────────────────────────┼────────────────────────────────────┼─────────────────
+      ⋅             │       ⋅                  ⋅             │  ⟨p;1,↓|1/2,1/2⟩  ⟨p;1,↓|3/2,1/2⟩  │       ⋅
+      ⋅             │       ⋅                  ⋅             │  ⟨p;0,↑|1/2,1/2⟩  ⟨p;0,↑|3/2,1/2⟩  │       ⋅
+ ───────────────────┼────────────────────────────────────────┼────────────────────────────────────┼─────────────────
+      ⋅             │       ⋅                  ⋅             │       ⋅                ⋅           │  ⟨p;1,↑|3/2,3/2⟩
 ```
 
 """
@@ -110,9 +114,10 @@ function jj2lsj(::Type{T}, orbs::RelativisticOrbital...) where T
 
         n = sum(length.(mⱼ))-2
         if n > 0
-            b = zeros(T,n,n)
+            nblocks = div(n,2)
+            b = [zeros(T,2,2) for i = 1:nblocks]
             rotate!(b, subspace...)
-            [pure[1],b,pure[2]]
+            [pure[1],b...,pure[2]]
         else
             pure
         end
