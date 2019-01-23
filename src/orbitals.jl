@@ -246,4 +246,16 @@ macro ros_str(orbs_str)
     orbitals_from_string(RelativisticOrbital, orbs_str)
 end
 
-export Orbital, SpinOrbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity, isbound, mℓrange, spin_orbitals
+function kappa_from_string(κ_str)
+    m = match(r"^([a-z]|\[[0-9]+\])([-]{0,1})$", κ_str)
+    m === nothing && throw(ArgumentError("Invalid κ string: $(κ_str)"))
+    ℓ = parse_orbital_ℓ(m, 1)
+    j = ℓ + (m[2] == "-" ? -1 : 1)//2
+    ℓj_to_kappa(ℓ, j)
+end
+
+macro κ_str(κ_str)
+    kappa_from_string(κ_str)
+end
+
+export Orbital, SpinOrbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity, isbound, mℓrange, spin_orbitals, @κ_str

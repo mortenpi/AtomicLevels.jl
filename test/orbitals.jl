@@ -33,12 +33,19 @@ using Random
 
         import AtomicLevels: ℓj_to_kappa
         @test ℓj_to_kappa(0, hi"1/2") == -1
+        @test κ"s" == -1
         @test ℓj_to_kappa(1, hi"1/2") == 1
+        @test κ"p-" == 1
         @test ℓj_to_kappa(1, 3//2) == -2
+        @test κ"p" == -2
         @test ℓj_to_kappa(2, 3//2) == 2
+        @test κ"d-" == 2
         @test ℓj_to_kappa(2, 5//2) == -3
+        @test κ"d" == -3
         @test ℓj_to_kappa(3, 5//2) == 3
+        @test κ"f-" == 3
         @test ℓj_to_kappa(3, 7//2) == -4
+        @test κ"f" == -4
         @test_throws ArgumentError ℓj_to_kappa(0, hi"3/2")
         @test_throws ArgumentError ℓj_to_kappa(0, 0)
         @test_throws ArgumentError ℓj_to_kappa(6, 1//2)
