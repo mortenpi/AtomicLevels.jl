@@ -17,6 +17,9 @@ ClebschGordanℓs(j₁::I, m₁::I, j₂::R, m₂::R, J::R, M::R) where {I<:Inte
 Base.convert(::Type{T}, cg::ClebschGordan) where {T<:Real} =
     clebschgordan(cg.j₁,cg.m₁,cg.j₂,cg.m₂,cg.J,cg.M)
 
+# We have chosen the Clebsch–Gordan coefficients to be real.
+Base.adjoint(cg::ClebschGordan) = cg
+
 Base.show(io::IO, cg::ClebschGordan) =
     write(io, "⟨$(rs(cg.j₁)),$(rs(cg.j₂));$(rs(cg.m₁)),$(rs(cg.m₂))|$(rs(cg.J)),$(rs(cg.M))⟩")
 
@@ -56,7 +59,7 @@ function rotate!(blocks::Vector{M}, orbs::RelativisticOrbital...) where {T,M<:Ab
     ℓ = kappa_to_ℓ(first(orbs).κ)
     # We sort by mⱼ and remove the first and last elements since they
     # are pure and trivially unity.
-    ℓms = sort(vcat([[(ℓ,m,s) for m ∈ -ℓ:ℓ] for s = -1//2:1//2]...)[2:end-1], by=((ℓms)) -> +(ℓms[2:3]...))
+    ℓms = sort(vcat([[(ℓ,m,s) for m ∈ -ℓ:ℓ] for s = -1//2:1//2]...)[2:end-1], by=((ℓms)) -> (ℓms[2],+(ℓms[2:3]...)))
     jmⱼ = sort(vcat([[(j,mⱼ) for mⱼ ∈ -j:j] for j ∈ [convert(Rational, kappa_to_j(o.κ)) for o in orbs]]...), by=last)[2:end-1]
     for (a,(ℓ,m,s)) in enumerate(ℓms)
         bi = cld(a, 2)
