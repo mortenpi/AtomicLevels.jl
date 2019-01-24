@@ -135,4 +135,14 @@ function jj2lsj(::Type{T}, orbs::RelativisticOrbital...) where T
 end
 jj2lsj(orbs::RelativisticOrbital...) = jj2lsj(Float64, orbs...)
 
+function jj2lsj(sorb::SpinOrbital)
+    @unpack orb,mℓ,spin = sorb
+    @unpack n,ℓ = orb
+    ms = (spin ? 1 : -1)//2
+    mj = mℓ + ms
+    map(max(abs(mj),ℓ-1//2):(ℓ+1//2)) do j
+        (RelativisticOrbital(n,ℓ,j),mj)=>clebschgordan(ℓ,mℓ,1//2,ms,j,mj)
+    end
+end
+
 export jj2lsj, ClebschGordan, ClebschGordanℓs
