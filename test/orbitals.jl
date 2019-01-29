@@ -146,6 +146,16 @@ using Random
         @test isodd(parity(ro"kp"))
     end
 
+    @testset "Symmetry" begin
+        @test symmetry(o"1s") == 0
+        @test symmetry(o"2s") == symmetry(o"1s")
+        @test symmetry(o"2s") != symmetry(o"2p")
+
+        @test symmetry(ro"1s") == symmetry(ro"2s")
+        @test symmetry(ro"2p") == symmetry(ro"3p")
+        @test symmetry(ro"2p") != symmetry(ro"2p-")
+    end
+
     @testset "Bound" begin
         @test isbound(o"1s")
         @test isbound(o"3d")
@@ -189,6 +199,11 @@ using Random
         @test parity(po₋β) == p"odd"
         @test parity(po₀β) == p"odd"
         @test parity(po₊β) == p"odd"
+
+        @test symmetry(soα) != symmetry(soβ)
+        @test symmetry(po₋α) == symmetry(po₀α) == symmetry(po₊α)
+        @test symmetry(po₋β) == symmetry(po₀β) == symmetry(po₊β)
+        @test symmetry(po₀α) != symmetry(po₀β)
 
         @test isbound(soα)
         @test !isbound(SpinOrbital(o"ks", 0, true))

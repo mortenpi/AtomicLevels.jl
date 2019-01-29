@@ -37,6 +37,7 @@ function Base.isless(a::Orbital, b::Orbital)
 end
 
 parity(orb::Orbital) = p"odd"^orb.ℓ
+symmetry(orb::Orbital) = orb.ℓ
 
 isbound(::Orbital{Int}) = true
 isbound(::Orbital{Symbol}) = false
@@ -72,6 +73,8 @@ Base.isless(a::SpinOrbital, b::SpinOrbital) =
     a.orb == b.orb && a.mℓ == b.mℓ && a.spin > b.spin # We prefer α < β
 
 parity(so::SpinOrbital) = parity(so.orb)
+symmetry(so::SpinOrbital) = (symmetry(so.orb), so.spin)
+
 isbound(so::SpinOrbital) = isbound(so.orb)
 
 Base.promote_type(::Type{SpinOrbital{O}}, ::Type{SpinOrbital}) where O = SpinOrbital
@@ -178,6 +181,7 @@ function Base.isless(a::RelativisticOrbital, b::RelativisticOrbital)
 end
 
 parity(orb::RelativisticOrbital) = p"odd"^kappa_to_ℓ(orb.κ)
+symmetry(orb::RelativisticOrbital) = orb.κ
 
 isbound(::RelativisticOrbital{Int}) = true
 isbound(::RelativisticOrbital{Symbol}) = false
@@ -258,4 +262,4 @@ macro κ_str(κ_str)
     kappa_from_string(κ_str)
 end
 
-export Orbital, SpinOrbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity, isbound, mℓrange, spin_orbitals, @κ_str
+export Orbital, SpinOrbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity, symmetry, isbound, mℓrange, spin_orbitals, @κ_str
