@@ -73,7 +73,7 @@ Base.isless(a::SpinOrbital, b::SpinOrbital) =
     a.orb == b.orb && a.mℓ == b.mℓ && a.spin > b.spin # We prefer α < β
 
 parity(so::SpinOrbital) = parity(so.orb)
-symmetry(so::SpinOrbital) = (symmetry(so.orb), so.spin)
+symmetry(so::SpinOrbital) = (symmetry(so.orb), so.mℓ, so.spin)
 
 isbound(so::SpinOrbital) = isbound(so.orb)
 

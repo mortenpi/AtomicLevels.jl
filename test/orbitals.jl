@@ -201,9 +201,20 @@ using Random
         @test parity(po₊β) == p"odd"
 
         @test symmetry(soα) != symmetry(soβ)
-        @test symmetry(po₋α) == symmetry(po₀α) == symmetry(po₊α)
-        @test symmetry(po₋β) == symmetry(po₀β) == symmetry(po₊β)
+
+        @test symmetry(po₋α) != symmetry(po₀α)
+        @test symmetry(po₋α) != symmetry(po₊α)
+        @test symmetry(po₊α) != symmetry(po₀α)
+
+        @test symmetry(po₋β) != symmetry(po₀β)
+        @test symmetry(po₋β) != symmetry(po₊β)
+        @test symmetry(po₊β) != symmetry(po₀β)
+
+        @test symmetry(po₋α) != symmetry(po₋β)
         @test symmetry(po₀α) != symmetry(po₀β)
+        @test symmetry(po₊α) != symmetry(po₊β)
+
+        @test symmetry(po₋α) == symmetry(SpinOrbital(o"3p", -1, true))
 
         @test isbound(soα)
         @test !isbound(SpinOrbital(o"ks", 0, true))
