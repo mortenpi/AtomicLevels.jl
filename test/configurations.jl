@@ -79,6 +79,7 @@
         @test c"1s2 2p kp"[2:3] == c"2p kp"
 
         @test o"1s" ∈ c"[He]"
+        @test ro"1s" ∈ rc"[He]"
     end
 
     @testset "Sorting" begin
@@ -248,6 +249,9 @@
 
         @test continuum(Configuration([SpinOrbital(o"1s",0,true), SpinOrbital(o"ks",0,true)], [1, 1])) ==
             Configuration([SpinOrbital(o"ks",0,true),], [1,])
+
+        @test all([o ∈ spin_configurations(c"1s2")[1]
+                   for o in spin_orbitals(o"1s")])
 
         @test map(spin_configurations(c"[Kr] 5s2 5p6")[1]) do (orb,occ,state)
             orb.orb.n < 5 && state == :closed || orb.orb.n == 5 && state == :open

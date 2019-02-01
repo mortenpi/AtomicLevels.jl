@@ -246,7 +246,7 @@ end
 
 num_electrons(conf::Configuration) = sum(conf.occupancy)
 
-Base.in(orb::Orbital, conf::Configuration{O}) where O =
+Base.in(orb::O, conf::Configuration{O}) where {O<:AbstractOrbital} =
     orb ∈ conf.orbitals
 
 Base.filter(f::Function, conf::Configuration) =
