@@ -1,55 +1,55 @@
-using UnicodeFun
-
-struct Level
-    conf::Config
-    term::Term
-    J::Rational
+struct Level{O,IT,T}
+    csf::CSF{O,IT,T}
+    J::HalfInteger
+    function Level(csf::CSF{O,IT,T}, J::HalfInteger) where {O,IT,T}
+        J ∈ J_range(last(csf.terms)) ||
+            throw(ArgumentError("Invalid J = $(J) for term $(last(csf.terms))"))
+        new{O,IT,T}(csf, J)
+    end
 end
 
-weight(l::Level) = (2l.J + 1)
+function Base.show(io::IO, level::Level)
+    write(io, "|")
+    show(io, level.csf)
+    write(io, ", J = $(level.J)⟩")
+end
 
-import Base.==
-==(l1::Level, l2::Level) = ((l1.conf == l2.conf) && (l1.term == l2.term) && (l1.J == l2.J))
+weight(l::Level) = convert(Int, 2l.J + 1)
+
+Base.:(==)(l1::Level, l2::Level) = ((l1.csf == l2.csf) && (l1.J == l2.J))
 
 # It makes no sense to sort levels with different electron configurations
-import Base.<
-<(l1::Level, l2::Level) = ((l1.conf == l2.conf)) && (l1.term < l2.term) ||
-    ((l1.conf == l2.conf)) && (l1.term == l2.term) && (l1.J < l2.J)
-import Base.isless
-isless(l1::Level, l2::Level) = (l1 < l2)
-
-import Base.hash
-hash(l::Level) = hash((hash(l.conf),hash(l.term),l.J))
+Base.isless(l1::Level, l2::Level) = ((l1.csf < l2.csf)) ||
+    ((l1.csf == l2.csf)) && (l1.J < l2.J)
 
 J_range(term::Term) = abs(term.L-term.S):(term.L+term.S)
+J_range(term::HalfInteger) = term:term
 
-levels(conf::Config, term::Term) = sort([Level(conf,term,J) for J in J_range(term)])
-levels(conf::Config, term::Nothing) = [Level(conf,Term(0,0,1),0)]
-levels(conf::Config) = sort(vcat([levels(conf,term) for term in terms(conf)]...))
+levels(csf::CSF) = sort([Level(csf,J) for J in J_range(last(csf.terms))])
 
-import Base.show, Base.string
-
-function latex(l::Level, rat_subscripts=true)
-    J = if den(l.J) == 1
-        "_{$(num(l.J))}"
-    elseif rat_subscripts
-        "_{$(num(l.J))/$(den(l.J))}"
-    else
-        "_{$(num(l.J))($(den(l.J)))}"
+struct State{O,IT,T}
+    level::Level{O,IT,T}
+    M_J::HalfInteger
+    function State(level::Level{O,IT,T}, M_J::HalfInteger) where {O,IT,T}
+        abs(M_J) ≤ level.J ||
+            throw(ArgumentError("Invalid M_J = $(M_J) for level with J = $(level.J)"))
+        new{O,IT,T}(level, M_J)
     end
-    "|$(latex(l.conf))\\;$(latex(l.term))$(J)\\rangle"
-end
-show(io::IO, l::Level) = print(io, to_latex(latex(l, false)))
-
-function show(io::IO, m::MIME"text/latex", l::Level, wrap = true)
-    wrap && print(io, "\$")
-    print(io, "\\mathrm{$(latex(l))}")
-    wrap && print(io, "\$")
 end
 
-function string(l::Level)
-    J = den(l.J) == 1 ? num(l.J) : replace("$(float(l.J))", ".", "_")
-    "$(string(l.conf))_$(string(l.term))$(J)"
+function Base.show(io::IO, state::State)
+    write(io, "|")
+    show(io, state.level.csf)
+    write(io, ", J = $(state.level.J), M_J = $(state.M_J)⟩")
 end
 
-export Level, weight, ==, <, isless, hash, J_range, levels, show, string
+Base.:(==)(a::State,b::State) = a.level == b.level && a.M_J == b.M_J
+Base.isless(a::State,b::State) = a.level < b.level || a.level == b.level && a.M_J < b.M_J
+
+function states(level::Level{O,IT,T}) where {O,IT,T}
+    J = level.J
+    [State(level, M_J) for M_J ∈ -J:J]
+end
+states(csf::CSF) = states.(levels(csf))
+
+export Level, weight, J_range, levels, State, states

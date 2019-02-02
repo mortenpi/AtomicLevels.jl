@@ -1,25 +1,42 @@
-using UnicodeFun
+# * Term symbols
 
 struct Term
-    L::Integer
-    S::Rational
-    parity::Integer
+    L::HalfInteger
+    S::HalfInteger
+    parity::Parity
 end
+Term(L::Real, S::Real, parity::Integer) =
+    Term(convert(HalfInteger, L), convert(HalfInteger, S), convert(Parity, parity))
 
-function term_string(s::AbstractString)
-    T_pat = r"([0-9]+)([A-Z])([oe ]{0,1})"
-    ismatch(T_pat, s) || error("Invalid term string, $s")
-    m = match(T_pat, s)
-    L = lowercase(m[2][1])
-    Term(findfirst(ells, L)-1, (parse(Int, m[1]) - 1)//2,
-         m[3] == "o" ? -1 : 1)
+function Base.parse(::Type{Term}, s::AbstractString)
+    m = match(r"([0-9]+)([A-Z]|\[[0-9/]+\])([oe ]{0,1})", s)
+    isnothing(m) && throw(ArgumentError("Invalid term string $s"))
+    L = lowercase(m[2])
+    L = if L[1] == '['
+        L = strip(L, ['[',']'])
+        if occursin("/", L)
+            Ls = split(L, "/")
+            length(Ls) == 2 && length(Ls[1]) > 0 && length(Ls[2]) > 0 ||
+                throw(ArgumentError("Invalid term string $(s)"))
+            Rational(parse(Int, Ls[1]),parse(Int, Ls[2]))
+        else
+            parse(Int, L)
+        end
+    else
+        findfirst(L, spectroscopic)[1]-1
+    end
+    denominator(L) ∈ [1,2] || throw(ArgumentError("L must be integer or half-integer"))
+    S = (parse(Int, m[1]) - 1)//2
+    Term(L, S, m[3] == "o" ? p"odd" : p"even")
 end
 
 macro T_str(s::AbstractString)
-    term_string(s)
+    parse(Term, s)
 end
 
-multiplicity(t::Term) = round(Int, 2t.S + 1)
+Base.zero(::Type{Term}) = T"1S"
+
+multiplicity(t::Term) = convert(Int, 2t.S + 1)
 weight(t::Term) = (2t.L + 1) * multiplicity(t)
 
 import Base.==
@@ -31,100 +48,135 @@ import Base.<
 import Base.isless
 isless(t1::Term, t2::Term) = (t1 < t2)
 
-import Base.hash
-hash(t::Term) = hash((t.L,t.S,t.parity))
-
-function couple_terms(t1::Term, t2::Term)
-    L1 = t1.L
-    L2 = t2.L
-    S1 = t1.S
-    S2 = t2.S
-    p = t1.parity * t2.parity
-    sort(vcat([[Term(L, S, p) for S in abs(S1-S2):(S1+S2)]
-               for L in abs(L1-L2):(L1+L2)]...))
-end
-
-function couple_terms(t1s::Vector{Term}, t2s::Vector{Term})
-    ts = map(t1s) do t1
-        map(t2s) do t2
-            couple_terms(t1, t2)
-        end
-    end
-    sort(unique(vcat(vcat(ts...)...)))
-end
-
-couple_terms(ts::Vector{Vector{Term}}) = reduce(couple_terms, ts)
-
-function couple_terms(ts::Vector{Nothing})
-    [nothing]
-end
+Base.hash(t::Term) = hash((t.L,t.S,t.parity))
 
 include("xu2006.jl")
 
 # This function calculates the term symbol for a given orbital ℓʷ
-function xu_terms(ell::Integer, w::Integer, p::Integer)
+function xu_terms(ℓ::Int, w::Int, p::Parity)
     ts = map(((w//2 - floor(Int, w//2)):w//2)) do S
-        S_p = round(Int,2S)
-        map(0:w*ell) do L
-            repeat([Term(L,S,p)], Xu.X(w,ell, S_p, L))
-        end
+        S′ = 2S |> Int
+        map(L -> repeat([Term(L,S,p)], Xu.X(w, ℓ, S′, L)), 0:w*ℓ)
     end
     vcat(vcat(ts...)...)
 end
 
-function terms(orb::Orbital)
-    ell = orb[2]
-    w = orb[3]
+function terms(orb::Orbital, occ::Int)
+    ℓ = orb.ℓ
     g = degeneracy(orb)
-    (w > g/2) && (w = g - w)
+    occ > g && throw(ArgumentError("Invalid occupancy $occ for $orb with degeneracy $g"))
+    (occ > g/2 && occ != g) && (occ = g - occ)
 
-    p = parity(orb)
-
-    if w == 1
-        return [Term(ell,1//2,p)]
-    end
-
-    xu_terms(ell, w, p)
-end
-
-function terms(config::Config)
-    config = filter(o -> o[3]<degeneracy(o), config)
-
-    # All subshells are filled, total angular momentum = 0, total spin = 0
-    if length(config) == 0
-        return [Term(0, 0, 1)]
-    end
-
-    ts = map(config) do orb
-        terms(orb)
-    end
-
-    couple_terms(ts)
-end
-terms(config::AbstractString) = terms(ref_set_list(config))
-
-import Base.show, Base.string
-
-function ELL(L::Integer)
-    if L<length(ells)
-        uppercase(ells[L+1])
+    p = parity(orb)^occ
+    if occ == 1
+        [Term(ℓ,1//2,p)] # Single electron
+    elseif ℓ == 0 && occ == 2 || occ == degeneracy(orb) || occ == 0
+        [Term(0,0,p"even")] # Filled ℓ shell
     else
-        string(L)
+        xu_terms(ℓ, occ, p) # All other cases
     end
 end
 
-function latex(t::Term)
-    par = (t.parity == -1 ? "^o" : "")
-    "^{$(multiplicity(t))}$(ELL(t.L))$(par)"
-end
-show(io::IO, t::Term) = print(io, to_latex(latex(t)))
+function terms(config::Configuration{O}) where {O<:AbstractOrbital}
+    ts = map(config) do (orb,occ,state)
+        terms(orb,occ)
+    end
 
-function show(io::IO, ::MIME"text/latex", t::Term, wrap::Bool = true)
-    wrap && print(io, "\$")
-    print(io, "\\mathrm{$(latex(t))}")
-    wrap && print(io, "\$")
+    final_terms(ts)
 end
 
-string(t::Term, show_parity::Bool = true) = "$(round(Int, 2t.S+1))$(ELL(t.L))$(show_parity ? (t.parity == -1 ? 'o' : 'e') : "")"
+"""
+    count_terms(orb, occ, term)
 
-export Term, term_string, @T_str, multiplicity, weight, ==, <, isless, hash, couple_terms, terms, show, string
+Count how many times `term` occurs among the valid terms of
+`orb`^`occ`. Example:
+
+```
+count_terms(o"1s", 2, T"1S") # 1
+```
+"""
+function count_terms(orb::Orbital, occ::Int, term::Term)
+    ℓ = orb.ℓ
+    g = degeneracy(orb)
+    occ > g && throw(ArgumentError("Invalid occupancy $occ for $orb with degeneracy $g"))
+    (occ > g/2 && occ != g) && (occ = g - occ)
+
+    p = parity(orb)^occ
+    if occ == 1
+        term == Term(ℓ,1//2,p) ? 1 : 0
+    elseif ℓ == 0 && occ == 2 || occ == degeneracy(orb) || occ == 0
+        term == Term(0,0,p"even") ? 1 : 0
+    else
+        S′ = convert(Int, 2term.S)
+        Xu.X(occ, orb.ℓ, S′, convert(Int, term.L))
+    end
+end
+
+function write_L(io::IO, term::Term)
+    if isinteger(term.L)
+        write(io, uppercase(spectroscopic_label(convert(Int, term.L))))
+    else
+        write(io, "[$(numerator(term.L))/$(denominator(term.L))]")
+    end
+end
+
+function Base.show(io::IO, term::Term)
+    write(io, to_superscript(multiplicity(term)))
+    write_L(io, term)
+    write(io, to_superscript(term.parity))
+end
+
+# * Intermediate terms, seniority
+
+struct IntermediateTerm
+    term::Term
+    seniority::Int
+    function IntermediateTerm(term::Term, seniority::Int)
+        iseven(multiplicity(term)) ⊻ iseven(seniority) ||
+            throw(ArgumentError("Invalid seniority $(seniority) for term $(term)"))
+        new(term, seniority)
+    end
+end
+
+function Base.show(io::IO, iterm::IntermediateTerm)
+    # This is the notation by Giulio Racah, p.377:
+    # - Racah, G. (1943). Theory of complex spectra. iii. Physical Review,
+    #   63(9-10), 367–382. http://dx.doi.org/10.1103/physrev.63.367
+    write(io, to_subscript(iterm.seniority))
+    show(io, iterm.term)
+end
+
+Base.isless(a::IntermediateTerm, b::IntermediateTerm) =
+    a.seniority < b.seniority ||
+    a.seniority == b.seniority && a.term < b.term
+
+function intermediate_terms(orb::Orbital, w::Int=one(Int))
+    ts = terms(orb, w)
+    its = map(unique(ts)) do t
+        its = IntermediateTerm[]
+        previously_seen = 0
+        # The seniority number is defined as the minimum occupancy
+        # number ν ∈ n:-2:0 for which the term first appears, e.g. the
+        # ²D term first occurs in the d¹ configuration, then twice in
+        # the d³ configuration (which will then have the terms ₁²D and
+        # ₃²D).
+        #
+        # We have to loop in reverse, since odd occupation numbers
+        # should go from 1 and even from 0.
+        for ν ∈ reverse(w:-2:0)
+            nn = count_terms(orb, ν, t) - previously_seen
+            previously_seen += nn
+            append!(its, repeat([IntermediateTerm(t, ν)], nn))
+        end
+        its
+    end
+    sort(vcat(its...))
+end
+
+function intermediate_terms(config::Configuration)
+    map(config) do (orb,occ,state)
+        intermediate_terms(orb,occ)
+    end
+end
+
+export Term, @T_str, multiplicity, weight, terms, count_terms, IntermediateTerm, intermediate_terms

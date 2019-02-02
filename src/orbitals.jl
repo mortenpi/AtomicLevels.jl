@@ -1,150 +1,265 @@
-using UnicodeFun
-using Printf
+abstract type AbstractOrbital end
 
-Orbital{I<:Integer,S<:AbstractString} = Tuple{I,I,I,S} # (n,ell,occ,*/c/i)
-Config = Vector{Orbital}
+# The main quantum number can either be an integer > 0 or a symbolic
+# value (generally used to represent continuum electrons).
+const MQ = Union{Int,Symbol}
 
-degeneracy(ell::Integer) = 2ell + 1
-degeneracy(o::Orbital) = 2*degeneracy(o[2])
-filled(o::Orbital) = (o[3] == degeneracy(o))
+nisless(an::T, bn::T) where T = an < bn
+# Our convention is that symbolic main quantum numbers are always
+# greater than numeric ones, such that ks appears after 2p, etc.
+nisless(an::I, bn::Symbol) where {I<:Integer} = true
+nisless(an::Symbol, bn::I) where {I<:Integer} = false
 
-parity(orbital::Orbital) = (-1)^(orbital[3]*orbital[2])
-parity(config::Config) = mapreduce(o -> parity(o), *, config)
+# * Non-relativistic orbital
 
-import Base: open
-open(config::Config) =
-    filter(config) do o
-        o[4] != "c"
+struct Orbital{N<:MQ} <: AbstractOrbital
+    n::N
+    ℓ::Int
+    function Orbital(n::Int, ℓ::Int)
+        n ≥ 1 || throw(ArgumentError("Invalid main quantum number $(n)"))
+        0 ≤ ℓ && ℓ < n || throw(ArgumentError("Angular quantum number has to be ∈ [0,$(n-1)] when n = $(n)"))
+        new{Int}(n, ℓ)
     end
-closed(config::Config) =
-    filter(config) do o
-        o[4] == "c"
+    function Orbital(n::Symbol, ℓ::Int)
+        new{Symbol}(n, ℓ)
     end
-import Base: fill
-fill(c::Config) = [Orbital((o[1], o[2], degeneracy(o), o[4])) for o in c]
-
-nelc(c::Config) = sum([o[3] for o in c])
-
-import Base.isless
-isless(o1::Orbital, o2::Orbital) = o1[1] < o2[1] || (o1[1] == o2[1] && o1[2] < o2[2])
-
-noble_gases = Dict("He" => "1s2",
-                   "Ne" => "[He] 2s2 2p6",
-                   "Ar" => "[Ne] 3s2 3p6",
-                   "Kr" => "[Ar] 3d10 4s2 4p6",
-                   "Xe" => "[Kr] 4d10 5s2 5p6",
-                   "Rn" => "[Xe] 4f14 5d10 6s2 6p6")
-function core_ref_set(symbol::AbstractString, s::AbstractString="c")
-    if symbol ∉ keys(noble_gases)
-        error("Unknown core, $(symbol)")
-    end
-    s == "" && (s = "c")
-    sort(ref_set_list(join(map(o -> "$o$s", split(noble_gases[symbol])), " ")))
 end
 
-function ref_set_list(ref_set::AbstractString)
-    m = match(r"\[([a-zA-Z]{2})\]([ci*]{0,1})(.*)", ref_set)
-    core = []
-    if m != nothing
-        core = core_ref_set(m[1], m[2])
-        ref_set = strip(m[3])
+Base.show(io::IO, orb::Orbital{N}) where N =
+    write(io, "$(orb.n)$(spectroscopic_label(orb.ℓ))")
+
+degeneracy(orb::Orbital) = 2*(2orb.ℓ + 1)
+
+function Base.isless(a::Orbital, b::Orbital)
+    nisless(a.n, b.n) && return true
+    a.n == b.n && a.ℓ < b.ℓ && return true
+    false
+end
+
+parity(orb::Orbital) = p"odd"^orb.ℓ
+symmetry(orb::Orbital) = orb.ℓ
+
+isbound(::Orbital{Int}) = true
+isbound(::Orbital{Symbol}) = false
+
+mℓrange(orb::Orbital) = (-orb.ℓ:orb.ℓ)
+
+# ** Spin orbitals
+#
+# Spin orbitals are fully characterized orbitals, i.e. the quantum
+# numbers n,ℓ,mℓ,ms are all specified.
+
+struct SpinOrbital{O<:Orbital} <: AbstractOrbital
+    orb::O
+    mℓ::Int
+    spin::Bool
+    function SpinOrbital(orb::O, mℓ::Int, spin::Bool) where {O<:Orbital}
+        abs(mℓ) ≤ orb.ℓ ||
+            throw(ArgumentError("Magnetic quantum number not in valid range -$(orb.ℓ)..$(orb.ℓ)"))
+        new{O}(orb, mℓ, spin)
     end
-    orbs = map(split(ref_set)) do orb
-        m = match(r"([0-9]+)([a-z])([0-9]*)([ci*]{0,1})", orb)
-        n = parse(Int, m[1])
-        ell_i = something(findfirst(isequal(m[2][1]), ells), 0) - 1
-        ell_i >= n && error("Invalid orbital $(m[1])$(m[2])")
-        Orbital((n,
-                 ell_i,
-                 m[3] != "" ? parse(Int, m[3]) : 1,
-                 m[4] != "" ? m[4] : "*"))
-    end
-    Config([core;orbs])
+end
+function Base.show(io::IO, so::SpinOrbital)
+    show(io, so.orb)
+    write(io, to_subscript(so.mℓ))
+    write(io, so.spin ? "α" : "β")
 end
 
-macro c_str(s)
-    ref_set_list(s)
-end
+degeneracy(::SpinOrbital) = 1
 
-import Base.show, Base.string
+Base.isless(a::SpinOrbital, b::SpinOrbital) =
+    a.orb < b.orb ||
+    a.orb == b.orb && a.mℓ < b.mℓ ||
+    a.orb == b.orb && a.mℓ == b.mℓ && a.spin > b.spin # We prefer α < β
 
-function latex(o::Orbital)
-    s = if o[4] == "c"
-       "^c"
-    elseif o[4] == "i"
-        "^i"
-    else
-        ""
-    end
-    occ = o[3] > 1 ? "^{$(o[3])}" : ""
-    "$(o[1])$(ells[o[2]+1])$(occ)$(s)"
-end
-show(io::IO, o::Orbital) = print(io, to_latex(latex(o)))
+parity(so::SpinOrbital) = parity(so.orb)
+symmetry(so::SpinOrbital) = (symmetry(so.orb), so.mℓ, so.spin)
 
-function show(io::IO, ::MIME"text/latex", o::Orbital, wrap = true)
-    wrap && print(io, "\$")
-    print(io, "\\mathrm{$(latex(o))}")
-    wrap && print(io, "\$")
-end
+isbound(so::SpinOrbital) = isbound(so.orb)
 
-function string(o::Orbital)
-    m =  o[4] == "*" ? "" : o[4]
-    "$(o[1])$(ells[o[2]+1])$(o[3] > 1 ? o[3] : "")$m"
-end
+Base.promote_type(::Type{SpinOrbital{O}}, ::Type{SpinOrbital}) where O = SpinOrbital
+Base.promote_type(::Type{SpinOrbital}, ::Type{SpinOrbital{O}}) where O = SpinOrbital
+Base.promote_type(::Type{SpinOrbital{Orbital{I}}}, ::Type{SpinOrbital{Orbital{Symbol}}}) where {I<:Integer} = SpinOrbital
+Base.promote_type(::Type{SpinOrbital{Orbital{Symbol}}}, ::Type{SpinOrbital{Orbital{I}}}) where {I<:Integer} = SpinOrbital
 
-function strip_core(c::Config)
-    core_str = ""
-    c1 = sort(copy(c))
-    s = c1[1][4]
+"""
+    spin_orbitals(orbital)
 
-    for core in reverse(["He", "Ne", "Ar", "Kr", "Xe", "Rn"])
-        core_rs = core_ref_set(core, s)
-        stripped = all(map(o -> o ∈ c, core_rs)) ? sort(filter(o -> o ∉ core_rs, c)) : c
-        if length(stripped) < length(c1) && length(stripped) > 0
-            core_str = core
-            c1 = stripped
-            break
+Generate all permissible spin-orbitals for a given `orbital`, e.g. 2p -> 2p ⊗ mℓ = {-1,0,1} ⊗ s = {α,β}
+"""
+function spin_orbitals(orb::O) where {O<:Orbital}
+    map([true,false]) do spin
+        map(mℓrange(orb)) do mℓ
+            SpinOrbital(orb, mℓ, spin)
         end
-    end
-
-    core_str, occursin(s, "ci") ? s : "", c1
+    end |> so -> vcat(so...) |> sort
 end
 
-function latex(c::Config)
-    core,cs,c = strip_core(c)
-    core_str = if core == ""
-        ""
-    elseif cs == ""
-        "[$(core)] "
+# * Relativistic orbital
+
+"""
+    kappa_to_ℓ(κ::Integer) :: Integer
+
+Calculate the `ℓ` quantum number corresponding to the `κ` quantum number.
+
+Note: `κ` and `ℓ` values are always integers.
+"""
+function kappa_to_ℓ(kappa::Integer)
+    kappa == zero(kappa) && throw(ArgumentError("κ can not be zero"))
+    (kappa < 0) ? -(kappa+1) : kappa
+end
+
+"""
+    kappa_to_j(κ::Integer) :: HalfInteger
+
+Calculate the `j` quantum number corresponding to the `κ` quantum number.
+
+Note: `κ` is always an integer.
+"""
+function kappa_to_j(kappa::Integer)
+    kappa == zero(kappa) && throw(ArgumentError("κ can not be zero"))
+    HalfInteger(2*abs(kappa) - 1, 2)
+end
+
+"""
+    ℓj_to_kappa(ℓ::Integer, j::Real) :: Integer
+
+Converts a valid `(ℓ, j)` pair to the corresponding `κ` value.
+
+**Note:** there is a one-to-one correspondence between valid `(ℓ,j)` pairs and `κ` values
+such that for `j = ℓ ± 1/2`, `κ = ∓(j + 1/2)`.
+"""
+function ℓj_to_kappa(ℓ::Integer, j::Real)
+    assert_orbital_ℓj(ℓ, j)
+    (j < ℓ) ? ℓ : -(ℓ + 1)
+end
+
+function assert_orbital_ℓj(ℓ::Integer, j::Real)
+    j = HalfInteger(j)
+    s = hi"1/2"
+    (ℓ == j + s) || (ℓ == j - s) ||
+        throw(ArgumentError("Invalid (ℓ, j) = $(ℓ), $(j) pair, expected j = ℓ ± 1/2."))
+    return
+end
+
+struct RelativisticOrbital{N<:MQ} <: AbstractOrbital
+    n::N
+    κ::Int
+    function RelativisticOrbital(n::Integer, κ::Integer)
+        n ≥ 1 || throw(ArgumentError("Invalid main quantum number $(n)"))
+        κ == zero(κ) && throw(ArgumentError("κ can not be zero"))
+        ℓ = kappa_to_ℓ(κ)
+        0 ≤ ℓ && ℓ < n || throw(ArgumentError("Angular quantum number has to be ∈ [0,$(n-1)] when n = $(n)"))
+        new{Int}(n, κ)
+    end
+    function RelativisticOrbital(n::Symbol, κ::Integer)
+        κ == zero(κ) && throw(ArgumentError("κ can not be zero"))
+        new{Symbol}(n, κ)
+    end
+end
+RelativisticOrbital(n::MQ, ℓ::Integer, j::Real) = RelativisticOrbital(n, ℓj_to_kappa(ℓ, j))
+
+
+function Base.show(io::IO, orb::RelativisticOrbital)
+    write(io, "$(orb.n)$(spectroscopic_label(kappa_to_ℓ(orb.κ)))")
+    orb.κ > 0 && write(io, "⁻")
+end
+
+function flip_j(orb::RelativisticOrbital)
+    orb.κ == -1 && return RelativisticOrbital(orb.n, -1) # nothing to flip for s-orbitals
+    RelativisticOrbital(orb.n, orb.κ < 0 ? abs(orb.κ) - 1 : -(orb.κ + 1))
+end
+
+degeneracy(orb::RelativisticOrbital{N}) where N = 2*abs(orb.κ) # 2j + 1 = 2|κ|
+
+function Base.isless(a::RelativisticOrbital, b::RelativisticOrbital)
+    nisless(a.n, b.n) && return true
+    aℓ, bℓ = kappa_to_ℓ(a.κ), kappa_to_ℓ(b.κ)
+    a.n == b.n && aℓ < bℓ && return true
+    a.n == b.n && aℓ == bℓ && abs(a.κ) < abs(b.κ) && return true
+    false
+end
+
+parity(orb::RelativisticOrbital) = p"odd"^kappa_to_ℓ(orb.κ)
+symmetry(orb::RelativisticOrbital) = orb.κ
+
+isbound(::RelativisticOrbital{Int}) = true
+isbound(::RelativisticOrbital{Symbol}) = false
+
+# * Orbital construction from strings
+
+parse_orbital_n(m::RegexMatch,i=1) =
+    isnumeric(m[i][1]) ? parse(Int, m[i]) : Symbol(m[i])
+
+function parse_orbital_ℓ(m::RegexMatch,i=2)
+    ℓs = strip(m[i], ['[',']'])
+    if isnumeric(ℓs[1])
+        parse(Int, ℓs)
     else
-        @sprintf("[%s]^{%s} ", core, cs)
+        ℓi = findfirst(ℓs, spectroscopic)
+        isnothing(ℓi) && throw(ArgumentError("Invalid spectroscopic label: $(m[i])"))
+        first(ℓi) - 1
     end
-
-    @sprintf("%s%s", core_str,
-             join(map(latex, c), " "))
-end
-show(io::IO, c::Config) = print(io, to_latex(latex(c)))
-
-function show(io::IO, m::MIME"text/latex", c::Config, wrap = true)
-    wrap && print(io, "\$")
-    print(io, "\\mathrm{$(latex(c))}")
-    wrap && print(io, "\$")
 end
 
-function string(c::Config)
-    core,cs,c = strip_core(c)
-    core_str = if core == ""
-        ""
-    elseif cs == ""
-        "$(core)_"
+function orbital_from_string(::Type{O}, orb_str::AbstractString) where {O<:AbstractOrbital}
+    m = match(r"^([0-9]+|.)([a-z]|\[[0-9]+\])([-]{0,1})$", orb_str)
+    m === nothing && throw(ArgumentError("Invalid orbital string: $(orb_str)"))
+    n = parse_orbital_n(m)
+    ℓ = parse_orbital_ℓ(m)
+    if O == RelativisticOrbital
+        j = ℓ + (m[3] == "-" ? -1 : 1)*1//2
+        O(n, ℓ, j)
     else
-        @sprintf("%s_%s_",
-                 core == "" ? "" : "$(core)",
-                 cs == "" ? "" : cs)
+        m[3] == "" || throw(ArgumentError("Non-relativistic orbitals cannot have their spins explicitly specified"))
+        O(n, ℓ)
     end
-    @sprintf("%s%s", core_str,
-             join(map(string, c), "_"))
 end
 
-export Orbital, Config, degeneracy, filled, parity, open, closed, fill, nelc,
-ref_set_list, @c_str, show, string
+macro o_str(orb_str)
+    orbital_from_string(Orbital, orb_str)
+end
+
+macro ro_str(orb_str)
+    orbital_from_string(RelativisticOrbital, orb_str)
+end
+
+function orbitals_from_string(::Type{O}, orbs_str::AbstractString) where {O<:AbstractOrbital}
+    map(split(orbs_str)) do orb_str
+        m = match(r"^([0-9]+|.)\[([a-z]|[0-9]+)(-([a-z]|[0-9]+)){0,1}\]$", strip(orb_str))
+        m === nothing && throw(ArgumentError("Invalid orbitals string: $(orb_str)"))
+        n = parse_orbital_n(m)
+        ℓs = map(filter(i -> !isnothing(m[i]), [2,4])) do i
+            parse_orbital_ℓ(m, i)
+        end
+        orbs = if O == RelativisticOrbital
+            orbs = map(ℓ -> O(n, ℓ, ℓ-1//2), max(first(ℓs),1):last(ℓs))
+            append!(orbs, map(ℓ -> O(n, ℓ, ℓ+1//2), first(ℓs):last(ℓs)))
+        else
+            map(ℓ -> O(n, ℓ), first(ℓs):last(ℓs))
+        end
+        sort(orbs)
+    end |> o -> vcat(o...) |> sort
+end
+
+macro os_str(orbs_str)
+    orbitals_from_string(Orbital, orbs_str)
+end
+
+macro ros_str(orbs_str)
+    orbitals_from_string(RelativisticOrbital, orbs_str)
+end
+
+function kappa_from_string(κ_str)
+    m = match(r"^([a-z]|\[[0-9]+\])([-]{0,1})$", κ_str)
+    m === nothing && throw(ArgumentError("Invalid κ string: $(κ_str)"))
+    ℓ = parse_orbital_ℓ(m, 1)
+    j = ℓ + (m[2] == "-" ? -1 : 1)//2
+    ℓj_to_kappa(ℓ, j)
+end
+
+macro κ_str(κ_str)
+    kappa_from_string(κ_str)
+end
+
+export Orbital, SpinOrbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity, symmetry, isbound, mℓrange, spin_orbitals, @κ_str
