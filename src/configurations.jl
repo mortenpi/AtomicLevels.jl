@@ -1,3 +1,10 @@
+"""
+    struct Configuration{<:AbstractOrbital}
+
+Represents a configuration -- a set of orbitals and their associated occupation number.
+Furthermore, each orbital can be in one of the following _states_: `:open`, `:closed` or
+`:inactive`.
+"""
 struct Configuration{O<:AbstractOrbital}
     orbitals::Vector{O}
     occupancy::Vector{Int}
@@ -192,10 +199,38 @@ function Base.parse(::Type{Configuration{O}}, conf_str::AbstractString) where {O
     end
 end
 
+"""
+    @c_str -> Configuration{Orbital}
+
+Construct a [`Configuration`](@ref), representing a non-relativistic configuration, out of
+a string.
+
+```jldoctest
+julia> c"1s2 2s"
+1s² 2s
+
+julia> c"[Kr] 4d10 5s2 4f2"
+[Kr]ᶜ 4d¹⁰ 4f² 5s²
+```
+"""
 macro c_str(conf_str)
     parse(Configuration{Orbital}, conf_str)
 end
 
+"""
+    @rc_str -> Configuration{RelativisticOrbital}
+
+Construct a [`Configuration`](@ref) representing a relativistic configuration out of a
+string.
+
+```jldoctest
+julia> rc"[Ne] 3s 3p- 3p"
+[Ne]ᶜ 3s 3p⁻ 3p
+
+julia> rc"[Ne] 3s 3p-2 3p4"
+[Ne]ᶜ 3s 3p⁻² 3p⁴
+```
+"""
 macro rc_str(conf_str)
     parse(Configuration{RelativisticOrbital}, conf_str)
 end
@@ -244,6 +279,19 @@ function Base.isless(a::Configuration{<:O}, b::Configuration{<:O}) where {O<:Abs
     false
 end
 
+"""
+    num_electrons(conf::Configuration) -> Int
+
+Return the number of electrons in the configuration.
+
+```jldoctest
+julia> num_electrons(c"1s2")
+2
+
+julia> num_electrons(rc"[Kr] 5s2 5p-2 5p2")
+42
+```
+"""
 num_electrons(conf::Configuration) = sum(conf.occupancy)
 
 Base.in(orb::O, conf::Configuration{O}) where {O<:AbstractOrbital} =

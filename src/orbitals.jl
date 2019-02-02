@@ -1,7 +1,11 @@
 abstract type AbstractOrbital end
 
-# The main quantum number can either be an integer > 0 or a symbolic
-# value (generally used to represent continuum electrons).
+"""
+    const MQ = Union{Int,Symbol}
+
+Defines the possible types that may represent the main quantum number. It can either be an
+non-negative integer or a `Symbol` value (generally used to label continuum electrons).
+"""
 const MQ = Union{Int,Symbol}
 
 nisless(an::T, bn::T) where T = an < bn
@@ -12,6 +16,14 @@ nisless(an::Symbol, bn::I) where {I<:Integer} = false
 
 # * Non-relativistic orbital
 
+"""
+    struct Orbital{N <: AtomicLevels.MQ} <: AbstractOrbital
+
+Represents an orbital with just the angular quantum number `ℓ`.
+
+The type parameter has to be such that it can represent a proper main quantum number (i.e. a
+subtype of [`AtomicLevels.MQ`](@ref)).
+"""
 struct Orbital{N<:MQ} <: AbstractOrbital
     n::N
     ℓ::Int
@@ -28,27 +40,110 @@ end
 Base.show(io::IO, orb::Orbital{N}) where N =
     write(io, "$(orb.n)$(spectroscopic_label(orb.ℓ))")
 
+"""
+    degeneracy(orbital::Orbital)
+
+Returns the degeneracy of `orbital` which is `2(2ℓ+1)`
+
+# Examples
+
+```jldoctest
+julia> degeneracy(o"1s")
+2
+
+julia> degeneracy(o"2p")
+6
+```
+"""
 degeneracy(orb::Orbital) = 2*(2orb.ℓ + 1)
 
+"""
+    isless(a::Orbital, b::Orbital)
+
+Compares the orbitals `a` and `b` to decide which one comes before the
+other in a configuration.
+
+# Examples
+
+```jldoctest
+julia> o"1s" < o"2s"
+true
+
+julia> o"1s" < o"2p"
+true
+
+julia> o"ks" < o"2p"
+false
+```
+"""
 function Base.isless(a::Orbital, b::Orbital)
     nisless(a.n, b.n) && return true
     a.n == b.n && a.ℓ < b.ℓ && return true
     false
 end
 
+"""
+    parity(orbital::Orbital)
+
+Returns the parity of `orbital`, defined as `(-1)^ℓ`.
+
+# Examples
+
+```jldoctest
+julia> parity(o"1s")
+even
+
+julia> parity(o"2p")
+odd
+```
+
+"""
 parity(orb::Orbital) = p"odd"^orb.ℓ
+
+"""
+    symmetry(orbital::Orbital)
+
+Returns the symmetry for `orbital` which is simply `ℓ`.
+"""
 symmetry(orb::Orbital) = orb.ℓ
 
+"""
+    isbound(::Orbital)
+
+Returns `true` is the main quantum number is an integer, `false`
+otherwise.
+
+```jldoctest
+julia> isbound(o"1s")
+true
+
+julia> isbound(o"ks")
+false
+```
+"""
 isbound(::Orbital{Int}) = true
 isbound(::Orbital{Symbol}) = false
 
+"""
+    mℓrange(orbital::Orbital)
+
+Returns the range of valid values of `mℓ` for `orbital`.
+
+# Examples
+
+```jldoctest
+julia> mℓrange(o"2p")
+-1:1
+```
+"""
 mℓrange(orb::Orbital) = (-orb.ℓ:orb.ℓ)
 
-# ** Spin orbitals
-#
-# Spin orbitals are fully characterized orbitals, i.e. the quantum
-# numbers n,ℓ,mℓ,ms are all specified.
+"""
+    struct SpinOrbital{O<:Orbital} <: AbstractOrbital
 
+Spin orbitals are fully characterized orbitals, i.e. the quantum numbers `n`, `ℓ`, `mℓ` and
+`ms` are all specified.
+"""
 struct SpinOrbital{O<:Orbital} <: AbstractOrbital
     orb::O
     mℓ::Int
@@ -85,7 +180,22 @@ Base.promote_type(::Type{SpinOrbital{Orbital{Symbol}}}, ::Type{SpinOrbital{Orbit
 """
     spin_orbitals(orbital)
 
-Generate all permissible spin-orbitals for a given `orbital`, e.g. 2p -> 2p ⊗ mℓ = {-1,0,1} ⊗ s = {α,β}
+Generate all permissible spin-orbitals for a given `orbital`, e.g. 2p
+-> 2p ⊗ mℓ = {-1,0,1} ⊗ s = {α,β}
+
+# Examples
+
+```jldoctest
+julia> spin_orbitals(o"2p")
+6-element Array{SpinOrbital{Orbital{Int64}},1}:
+ 2p₋₁α
+ 2p₋₁β
+ 2p₀α
+ 2p₀β
+ 2p₁α
+ 2p₁β
+```
+
 """
 function spin_orbitals(orb::O) where {O<:Orbital}
     map([true,false]) do spin
@@ -262,4 +372,4 @@ macro κ_str(κ_str)
     kappa_from_string(κ_str)
 end
 
-export Orbital, SpinOrbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, parity, symmetry, isbound, mℓrange, spin_orbitals, @κ_str
+export Orbital, SpinOrbital, RelativisticOrbital, @o_str, @ro_str, @os_str, @ros_str, degeneracy, symmetry, isbound, mℓrange, spin_orbitals, @κ_str

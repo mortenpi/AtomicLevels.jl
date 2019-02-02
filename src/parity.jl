@@ -1,7 +1,36 @@
+"""
+    struct Parity
+
+Represents the parity of a quantum system, taking two possible values: `even` or `odd`.
+
+The integer values that correspond to `even` and `odd` parity are `+1` and `-1`, respectively.
+`Base.convert` can be used to convert integers into `Parity` values.
+
+```jldoctest
+julia> convert(Parity, 1)
+even
+
+julia> convert(Parity, -1)
+odd
+```
+"""
 struct Parity
     p::Bool
 end
 
+"""
+    @p_str
+
+A string macro to easily construct [`Parity`](@ref) values.
+
+```jldoctest
+julia> p"even"
+even
+
+julia> p"odd"
+odd
+```
+"""
 macro p_str(ps)
     if ps == "even"
         Parity(true)
@@ -32,4 +61,11 @@ Base.show(io::IO, p::Parity) =
 
 UnicodeFun.to_superscript(p::Parity) = iseven(p) ? "" : "ᵒ"
 
-export Parity, @p_str
+"""
+    parity(object) -> Parity
+
+Returns the parity of `object`.
+"""
+function parity end
+
+export Parity, @p_str, parity
