@@ -293,7 +293,37 @@ function Base.replace(conf::Configuration{O₁}, orbs::Pair{O₂,O₃}) where {O
     Configuration(orbitals, occupancy, states)
 end
 
-function Base.:+(a::Configuration{O₁}, b::Configuration{O₂}) where {O<:AbstractOrbital,O₁<:O,O₂<:O}
+"""
+    -(configuration::Configuration, orbital::AbstractOrbital[, n=1])
+
+Remove `n` electrons in the orbital `orbital` from the configuration
+`configuration`. If the orbital had previously been `:closed` or
+`:inactive`, it will now be `:open`.
+"""
+function Base.:(-)(configuration::Configuration{O₁}, orbital::O₂, n::Int=1) where {O<:AbstractOrbital,O₁<:O,O₂<:O}
+    orbitals = promote_type(O₁,O₂)[]
+    append!(orbitals, configuration.orbitals)
+    occupancy = copy(configuration.occupancy)
+    states = copy(configuration.states)
+
+    i = findfirst(isequal(orbital), orbitals)
+    isnothing(i) && throw(ArgumentError("$(orbital) not present in $(configuration)"))
+
+    occupancy[i] ≥ n ||
+        throw(ArgumentError("Trying to remove $(n) electrons from orbital $(orbital) with occupancy $(occupancy[i])"))
+
+    occupancy[i] -= n
+    states[i] = :open
+    if occupancy[i] == 0
+        deleteat!(orbitals, i)
+        deleteat!(occupancy, i)
+        deleteat!(states, i)
+    end
+
+    Configuration(orbitals, occupancy, states)
+end
+
+function Base.:(+)(a::Configuration{O₁}, b::Configuration{O₂}) where {O<:AbstractOrbital,O₁<:O,O₂<:O}
     orbitals = promote_type(O₁,O₂)[]
     append!(orbitals, a.orbitals)
     occupancy = copy(a.occupancy)

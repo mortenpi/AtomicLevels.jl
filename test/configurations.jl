@@ -146,6 +146,14 @@
         @test_throws ArgumentError replace(c"1s2 2s", o"2s"=>o"1s")
     end
 
+    @testset "Orbital removal" begin
+        @test c"1s2" - o"1s" == c"1s"
+        @test c"1s" - o"1s" == c""
+        @test c"1s 2s" - o"1s" == c"2s"
+        @test c"[Ne]" - o"2s" == c"[He] 2s 2p6c"
+        @test -(c"1s2 2s", o"1s", 2) == c"2s"
+    end
+
     @testset "Configuration additions" begin
         @test c"1s" + c"1s" == c"[He]*"
         @test c"1s" + c"2p" == c"1s 2p"
