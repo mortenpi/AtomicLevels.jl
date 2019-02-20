@@ -8,9 +8,6 @@
 
 #+PROPERTY: header-args:julia :session *julia-README*
 
-NB This branch only works on Julia master due to some type inference
-bugs present in the latest release.
-
 * Usage
   #+BEGIN_SRC julia :exports none
     using Pkg
