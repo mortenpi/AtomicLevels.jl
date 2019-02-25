@@ -50,7 +50,16 @@
 
     @testset "Number of electrons" begin
         @test num_electrons(c"[He]") == 2
+        @test num_electrons(rc"[He]") == 2
         @test num_electrons(c"[Xe]") == 54
+        @test num_electrons(rc"[Xe]") == 54
+
+        @test num_electrons(c"[Xe]", o"1s") == 2
+        @test num_electrons(rc"[Xe]", ro"1s") == 2
+        @test num_electrons(c"[Ne] 3s 3p", o"3p") == 1
+        @test num_electrons(rc"[Kr] Af-2 Bf5", ro"Bf") == 5
+        @test num_electrons(c"[Kr]", ro"5s") == 0
+        @test num_electrons(rc"[Rn]", ro"As") == 0
     end
 
     @testset "Access subsets" begin
@@ -152,6 +161,11 @@
         @test c"1s 2s" - o"1s" == c"2s"
         @test c"[Ne]" - o"2s" == c"[He] 2s 2p6c"
         @test -(c"1s2 2s", o"1s", 2) == c"2s"
+
+        @test delete!(c"1s 2s", o"1s") == c"2s"
+        @test delete!(c"1s2 2s", o"1s") == c"2s"
+        @test delete!(c"[Ne]", o"2p") == c"1s2c 2s2c"
+        @test delete!(rc"[Ne]", ro"2p-") == rc"1s2c 2s2c 2p4c"
     end
 
     @testset "Configuration additions" begin
@@ -310,5 +324,18 @@
         @test substitutions(spin_configurations(c"1s2")[1],
                             spin_configurations(c"1s ks")[3]) ==
                                 [SpinOrbital(o"1s",0,true)=>SpinOrbital(o"ks",0,true)]
+    end
+
+    @testset "Internal utilities" begin
+        @test AtomicLevels.get_noble_core_name(c"1s2 2s2 2p6") === nothing
+        @test AtomicLevels.get_noble_core_name(c"1s2c 2s2 2p6") === "He"
+        @test AtomicLevels.get_noble_core_name(c"1s2c 2s2c 2p6c") === "Ne"
+        @test AtomicLevels.get_noble_core_name(c"[He] 2s2 2p6c 3s2c 3p6c") === "He"
+        for gas in ["Rn", "Xe", "Kr", "Ar", "Ne", "He"]
+            c = parse(Configuration{Orbital}, "[$gas]")
+            @test AtomicLevels.get_noble_core_name(c) === gas
+            rc = parse(Configuration{RelativisticOrbital}, "[$gas]")
+            @test AtomicLevels.get_noble_core_name(rc) === gas
+        end
     end
 end
