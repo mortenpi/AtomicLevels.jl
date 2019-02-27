@@ -7,21 +7,24 @@ end
 ```
 
 Atomic orbitals, i.e. single particle states with well-defined orbital or total angular
-momentum, are usually the basic building blocks of atomic states. AtomicLevels provide
-various types and methods to work with orbitals.
+momentum, are usually the basic building blocks of atomic states. AtomicLevels provides
+types and methods to label orbital
 
 ## Orbital types
 
 AtomicLevels provides two basic types for labelling atomic orbitals: [`Orbital`](@ref) and
-[`RelativisticOrbital`](@ref).
+[`RelativisticOrbital`](@ref). Stricly speaking, these types do not label orbitals, but
+groups of orbitals with the same angular symmetry and radial behaviour (i.e. a
+[subshell](https://en.wikipedia.org/wiki/Electron_shell#Subshells)).
 
 ```@docs
 Orbital
 RelativisticOrbital
 ```
 
-To have labels for orbitals with all quantum numbers specified (i.e. including ``m_\ell``
-and ``m_s``), the [`SpinOrbital`](@ref) type can be used.
+The [`SpinOrbital`](@ref) type can be used to fully qualify all the quantum numbers (that
+is, also ``m_\ell`` and ``m_s``) of an [`Orbital`](@ref). It represent a since, distinct
+orbital.
 
 ```@docs
 SpinOrbital

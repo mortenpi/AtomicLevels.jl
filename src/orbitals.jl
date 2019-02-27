@@ -468,6 +468,7 @@ end
 
 Can be used to easily construct a list of [`RelativisticOrbital`](@ref)s.
 
+```jldoctest
 julia> ros"2[s-p] 3[p] k[0-d]"
 10-element Array{RelativisticOrbital,1}:
  2s
@@ -480,7 +481,7 @@ julia> ros"2[s-p] 3[p] k[0-d]"
  kp
  kd⁻
  kd
-
+```
 """
 macro ros_str(orbs_str)
     orbitals_from_string(RelativisticOrbital, orbs_str)
