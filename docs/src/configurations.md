@@ -25,12 +25,15 @@ construct configurations:
 
 ## Interface
 
-Various methods exist to manipulate configurations or to query them for information.
+Various methods exist to manipulate or transform configurations or to query them for
+information.
 
 ```@docs
 num_electrons(::Configuration)
 Base.delete!
 Base.:(-)
+Base.close
+Base.fill
 ```
 
 ## Generating configuration lists

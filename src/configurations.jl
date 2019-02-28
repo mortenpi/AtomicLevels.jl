@@ -4,6 +4,23 @@
 Represents a configuration -- a set of orbitals and their associated occupation number.
 Furthermore, each orbital can be in one of the following _states_: `:open`, `:closed` or
 `:inactive`.
+
+# Constructors
+
+    Configuration(orbitals :: Vector{<:AbstractOrbital}, occupancy :: Vector{Int}, states :: Vector{Symbol})
+    Configuration(orbitals :: Vector{Tuple{<:AbstractOrbital, Int, Symbol}})
+
+In the first case, the paramaters of each orbital have to be passed as separate vectors, and
+the orbitals and occupancy have to be of the same length. The `states` vector can be shorter
+and then the latter orbitals that were not explicitly specified by `states` are assumed to
+be `:open`.
+
+The second constructor allows you to pass a vector of tuples instead, where each tuple is a
+triplet `(orbital :: AbstractOrbital, occupancy :: Int, state :: Symbol)` corresponding to
+each orbital.
+
+In all cases, all the orbitals have to be distinct. The orbitals in the configuration will
+be sorted according to the ordering defined for the particular [`AbstractOrbital`](@ref).
 """
 struct Configuration{O<:AbstractOrbital}
     orbitals::Vector{O}
@@ -90,19 +107,25 @@ Base.:(==)(a::Configuration{<:O}, b::Configuration{<:O}) where {O<:AbstractOrbit
     issimilar(a, b) && a.states == b.states
 
 """
-    fill(configuration)
+    fill(c::Configuration)
 
-Ensure all orbitals are at their maximum occupancy.
+Returns a corresponding configuration where the orbitals are completely filled (as
+determined by [`degeneracy`](@ref)).
 """
 function Base.fill(config::Configuration)
     map(config) do (orb,occ,state)
-        orb,degeneracy(orb),state
+        orb, degeneracy(orb), state
     end |> Configuration
 end
 
+"""
+    close(c::Configuration)
+
+Return a corresponding configuration where where all the orbitals are marked `:closed`.
+"""
 function Base.close(config::Configuration)
     map(config) do (orb,occ,state)
-        orb,occ,:closed
+        orb, occ, :closed
     end |> Configuration
 end
 
@@ -148,10 +171,10 @@ the first part of the closed part of `config`, or `nothing` if no such element i
 
 ```jldoctest
 julia> AtomicLevels.get_noble_core_name(c"[He] 2s2")
-He
+"He"
 
 julia> AtomicLevels.get_noble_core_name(c"1s2c 2s2c 2p6c 3s2c")
-Ne
+"Ne"
 
 julia> AtomicLevels.get_noble_core_name(c"1s2") === nothing
 true
