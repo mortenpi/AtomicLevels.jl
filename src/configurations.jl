@@ -378,20 +378,145 @@ function num_electrons(c::Configuration, o::AbstractOrbital)
     c.occupancy[idx]
 end
 
+"""
+    in(o::AbstractOrbital, c::Configuration) -> Bool
+
+Checks if orbital `o` is part of configuration `c`.
+
+```jldoctest
+julia> in(o"2s", c"1s2 2s2")
+true
+
+julia> o"2p" ∈ c"1s2 2s2"
+false
+```
+"""
 Base.in(orb::O, conf::Configuration{O}) where {O<:AbstractOrbital} =
     orb ∈ conf.orbitals
 
+"""
+    filter(f, c::Configuration) -> Configuration
+
+Filter out the orbitals from configuration `c` for which the predicate `f` returns `false`.
+The predicate `f` needs to take three arguments: `orbital`, `occupancy` and `state`.
+
+```julia
+julia> filter((o,occ,s) -> o.ℓ == 1, c"[Kr]")
+2p⁶ᶜ 3p⁶ᶜ 4p⁶ᶜ
+```
+"""
 Base.filter(f::Function, conf::Configuration) =
     conf[filter(j -> f(conf[j]...), eachindex(conf.orbitals))]
 
+"""
+    core(::Configuration) -> Configuration
+
+Return the core configuration (i.e. the sub-configuration of all the orbitals that are
+marked `:closed`).
+
+```jldoctest
+julia> core(c"1s2c 2s2c 2p6c 3s2")
+[Ne]ᶜ
+
+julia> core(c"1s2 2s2")
+∅
+
+julia> core(c"1s2 2s2c 2p6c")
+2s²ᶜ 2p⁶ᶜ
+```
+"""
 core(conf::Configuration) = filter((orb,occ,state) -> state == :closed, conf)
+
+"""
+    peel(::Configuration) -> Configuration
+
+Return the non-core part of the configuration (i.e. orbitals not marked `:closed`).
+
+```jldoctest
+julia> peel(c"1s2c 2s2c 2p3")
+2p³
+
+julia> peel(c"[Ne] 3s 3p3")
+3s 3p³
+```
+"""
 peel(conf::Configuration) = filter((orb,occ,state) -> state != :closed, conf)
+
+"""
+    inactive(::Configuration) -> Configuration
+
+Return the part of the configuration marked `:inactive`.
+
+```jldoctest
+julia> inactive(c"1s2c 2s2i 2p3i 3s2")
+2s²ⁱ 2p³ⁱ
+```
+"""
 inactive(conf::Configuration) = filter((orb,occ,state) -> state == :inactive, conf)
+
+"""
+    active(::Configuration) -> Configuration
+
+Return the part of the configuration marked `:open`.
+
+```jldoctest
+julia> active(c"1s2c 2s2i 2p3i 3s2")
+3s²
+```
+"""
 active(conf::Configuration) = filter((orb,occ,state) -> state != :inactive, peel(conf))
+
+"""
+    bound(::Configuration) -> Configuration
+
+Return the bound part of the configuration (see also [`isbound`](@ref)).
+
+```jldoctest
+julia> bound(c"1s2 2s2 2p4 Ks2 Kp1")
+1s² 2s² 2p⁴
+```
+"""
 bound(conf::Configuration) = filter((orb,occ,state) -> isbound(orb), conf)
+
+"""
+    continuum(::Configuration) -> Configuration
+
+Return the non-bound (continuum) part of the configuration (see also [`isbound`](@ref)).
+
+```jldoctest
+julia> continuum(c"1s2 2s2 2p4 Ks2 Kp1")
+Ks² Kp
+```
+"""
 continuum(conf::Configuration) = filter((orb,occ,state) -> !isbound(orb), peel(conf))
 
+"""
+    parity(::Configuration) -> Parity
+
+Return the parity of the configuration.
+
+```jldoctest
+julia> parity(c"1s 2p")
+odd
+
+julia> parity(c"1s 2p2")
+even
+```
+
+See also: [`Parity`](@ref)
+"""
 parity(conf::Configuration) = mapreduce(o -> parity(o[1])^o[2], *, conf)
+
+"""
+    count(::Configuration) -> Int
+
+Return the number of electrons in the configuration.
+
+```jldoctest
+julia> count(c"[Kr] 5s")
+37
+```
+"""
 Base.count(conf::Configuration) = mapreduce(o -> o[2], +, conf)
 
 function Base.replace(conf::Configuration{O₁}, orbs::Pair{O₂,O₃}) where {O<:AbstractOrbital,O₁<:O,O₂<:O,O₃<:O}
@@ -455,12 +580,26 @@ function Base.:(-)(configuration::Configuration{O₁}, orbital::O₂, n::Int=1) 
     Configuration(orbitals, occupancy, states)
 end
 
+"""
+    +(::Configuration, ::Configuration)
+
+Add two configurations together. If both configuration have an orbital, the number of
+electrons gets added together, but in this case the status of the orbitals must match.
+
+```jldoctest
+julia> c"1s" + c"2s"
+1s 2s
+
+julia> c"1s" + c"1s"
+1s²
+```
+"""
 function Base.:(+)(a::Configuration{O₁}, b::Configuration{O₂}) where {O<:AbstractOrbital,O₁<:O,O₂<:O}
     orbitals = promote_type(O₁,O₂)[]
     append!(orbitals, a.orbitals)
     occupancy = copy(a.occupancy)
     states = copy(a.states)
- for (orb,occ,state) in b
+    for (orb,occ,state) in b
         i = findfirst(isequal(orb), orbitals)
         if isnothing(i)
             push!(orbitals, orb)

@@ -25,17 +25,58 @@ construct configurations:
 
 ## Interface
 
-Various methods exist to manipulate or transform configurations or to query them for
+For example, it is possible to index into a configuration, including with a range of
+indices, returning a sub-configuration consisting of only those orbitals. With an integer
+index, an `(orbital, occupancy, state)` tuple is returned.
+
+```jldoctest confexamples
+julia> config = c"1s2c 2si 2p3"
+[He]ᶜ 2sⁱ 2p³
+
+julia> config[2]
+(2s, 1, :inactive)
+
+julia> config[1:2]
+[He]ᶜ 2sⁱ
+
+julia> config[[3,1]]
+[He]ᶜ 2p³
+```
+
+The configuration can also be iterated over. Each item is a `(orbital, occupancy, state)`
+tuple.
+
+```jldoctest confexamples
+julia> for (o, nelec, s) in config
+           @show o, nelec, s
+       end
+(o, nelec, s) = (1s, 2, :closed)
+(o, nelec, s) = (2s, 1, :inactive)
+(o, nelec, s) = (2p, 3, :open)
+```
+
+Various other methods exist to manipulate or transform configurations or to query them for
 information.
 
 ```@docs
 num_electrons(::Configuration)
 Base.delete!
+Base.:(+)
 Base.:(-)
 Base.close
 close!
 Base.fill
 Base.fill!
+Base.in
+Base.filter
+Base.count
+core
+peel
+active
+inactive
+bound
+continuum
+parity(::Configuration)
 ```
 
 ## Generating configuration lists
