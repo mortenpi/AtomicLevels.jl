@@ -641,17 +641,17 @@ possible juxtapositions of configurations from each collection.
 # Examples
 
 ```jldoctest
-julia> [c"1s", c"2s"] ⊗ [c"2p-", c"2p"]
-4-element Array{Configuration{RelativisticOrbital},1}:
+julia> c"1s" ⊗ [c"2s2", c"2s 2p"]
+2-element Array{Configuration{Orbital{Int64}},1}:
+ 1s 2s²
+ 1s 2s 2p
+
+julia> [rc"1s", rc"2s"] ⊗ [rc"2p-", rc"2p"]
+4-element Array{Configuration{RelativisticOrbital{Int64}},1}:
  1s 2p⁻
  1s 2p
  2s 2p⁻
  2s 2p
-
-julia> c"1s" ⊗ [c"2s2", c"2s 2p-"]
-2-element Array{Configuration{RelativisticOrbital},1}:
- 1s 2s²
- 1s 2s 2p⁻
 ```
 """
 ⊗(a::Vector{<:Configuration}, b::Vector{<:Configuration}) =
@@ -670,8 +670,8 @@ non-relativistic orbital with `n` and `ℓ` quantum numbers, with given occupanc
 # Examples
 
 ```jldoctest
-julia> rconfigurations_from_orbital(3, 1, 2)
-3-element Array{Configuration{RelativisticOrbital},1}:
+julia> AtomicLevels.rconfigurations_from_orbital(3, 1, 2)
+3-element Array{Configuration{RelativisticOrbital{N}} where N,1}:
  3p⁻²
  3p⁻ 3p
  3p²
@@ -712,8 +712,8 @@ non-relativistic version of the `orbital` with a given occupancy.
 # Examples
 
 ```jldoctest
-julia> rconfigurations_from_orbital(o"3p", 2)
-3-element Array{Configuration{RelativisticOrbital},1}:
+julia> AtomicLevels.rconfigurations_from_orbital(o"3p", 2)
+3-element Array{Configuration{RelativisticOrbital{N}} where N,1}:
  3p⁻²
  3p⁻ 3p
  3p²
@@ -745,7 +745,7 @@ and `occupancy` are integers, and `ℓ` is in spectroscopic notation.
 
 ```jldoctest
 julia> rcs"3p2"
-3-element Array{Configuration{Int64},1}:
+3-element Array{Configuration{RelativisticOrbital{N}} where N,1}:
  3p⁻²
  3p⁻ 3p
  3p²
@@ -759,11 +759,14 @@ end
 """
     spin_configurations(configuration)
 
-Generate all possible configurations of spin-orbitals from
-`configuration`, i.e. all permissible values for the quantum numbers
-`n`, `ℓ`, `mℓ`, `ms` for each electron. Example:
+Generate all possible configurations of spin-orbitals from `configuration`, i.e. all
+permissible values for the quantum numbers `n`, `ℓ`, `mℓ`, `ms` for each electron. Example:
 
-    spin_configuration(c"1s2") -> 1s₀α 1s₀β
+```jldoctest
+julia> spin_configurations(c"1s2")
+1-element Array{Configuration{SpinOrbital{Orbital{Int64}}},1}:
+ 1s²
+```
 """
 function spin_configurations(c::Configuration{O}) where {O<:Orbital}
     states = Dict{Orbital,Symbol}()
@@ -783,8 +786,8 @@ end
 """
     spin_configurations(configurations)
 
-For each configuration in `configurations`, generate all possible
-configurations of spin-orbitals.
+For each configuration in `configurations`, generate all possible configurations of
+spin-orbitals.
 """
 spin_configurations(cs::Vector{<:Configuration}) =
     sort(vcat(map(spin_configurations, cs)...))
