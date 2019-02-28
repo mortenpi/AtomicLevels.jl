@@ -33,7 +33,9 @@ num_electrons(::Configuration)
 Base.delete!
 Base.:(-)
 Base.close
+close!
 Base.fill
+Base.fill!
 ```
 
 ## Generating configuration lists
