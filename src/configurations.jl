@@ -114,11 +114,7 @@ determined by [`degeneracy`](@ref)).
 
 See also: [`fill!`](@ref)
 """
-function Base.fill(config::Configuration)
-    map(config) do (orb,occ,state)
-        orb, degeneracy(orb), state
-    end |> Configuration
-end
+Base.fill(config::Configuration) = fill!(deepcopy(config))
 
 """
     fill!(c::Configuration)
@@ -140,11 +136,7 @@ Return a corresponding configuration where where all the orbitals are marked `:c
 
 See also: [`close!`](@ref)
 """
-function Base.close(config::Configuration)
-    map(config) do (orb,occ,state)
-        orb, occ, :closed
-    end |> Configuration
-end
+Base.close(config::Configuration) = close!(deepcopy(config))
 
 """
     close!(c::Configuration)
