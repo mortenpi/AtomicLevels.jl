@@ -94,11 +94,7 @@ Base.:(==)(a::Configuration{<:O}, b::Configuration{<:O}) where {O<:AbstractOrbit
 
 Ensure all orbitals are at their maximum occupancy.
 """
-function Base.fill(config::Configuration)
-    map(config) do (orb,occ,state)
-        orb,degeneracy(orb),state
-    end |> Configuration
-end
+Base.fill(config::Configuration) = fill!(deepcopy(config))
 
 """
     fill!(c::Configuration)
@@ -113,11 +109,7 @@ function Base.fill!(config::Configuration)
     return config
 end
 
-function Base.close(config::Configuration)
-    map(config) do (orb,occ,state)
-        orb,occ,:closed
-    end |> Configuration
-end
+Base.close(config::Configuration) = close!(deepcopy(config))
 
 """
     close!(c::Configuration)
